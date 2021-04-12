@@ -2,7 +2,7 @@ CC=g++
 CPPFLAGS=--std=c++17
 LDFLAGS=
 
-SRC=table_builder.cpp main.cpp
+SRC=file.cpp main.cpp
 OBJ=$(subst .cpp,.o,$(SRC))
 
 all: $(OBJ) 

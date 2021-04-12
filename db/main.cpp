@@ -1,9 +1,12 @@
-#include "table_builder.h"
+#include "file.h"
 #include "constants.h"
 
 #include <iostream>
 
 int main() {
-    mdb::TableBuilder t("test.sst");
-    t.add("a", "abc");
+    mdb::WritableFile t("test.txt");
+
+    for (int i = 0; i < 1000000; i++) {
+        t.add("a", "abc");
+    }
 }
