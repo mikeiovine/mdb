@@ -14,16 +14,25 @@ WritableFile::WritableFile(const std::string& filename) {
     }
 }
 
-void WritableFile::add(const std::string& key, const std::string& value) {
-    write(key.c_str(), key.size());
-    write(&mdb::constants::KV_SEP, 1);
-    write(value.c_str(), value.size());
-    write(&mdb::constants::PAIR_SEP, 1);
+WritableFile::~WritableFile() {
+    if (!closed && fd_ != -1) {
+        // Ignore errors
+        ::close(fd_);
+    }
 }
 
 void WritableFile::write(const char * data, size_t size) {
     if (::write(fd_, data, size) == -1) {
         throw std::system_error(errno, std::generic_category());
+    }
+}
+
+void WritableFile::close() {
+    if (!closed) {
+        closed = true;
+        if (::close(fd_) == -1) {
+            throw std::system_error(errno, std::generic_category());
+        }
     }
 }
 

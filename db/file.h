@@ -15,13 +15,14 @@ class WritableFile {
         WritableFile(WritableFile&&) = delete;
         WritableFile& operator=(WritableFile&&) = delete;
 
-        ~WritableFile() = default;
+        ~WritableFile();
 
-        void add(const std::string& key, const std::string& value);
+        void write(const char * data, size_t size);
+        void close();
 
     private:
         int fd_;
-        void write(const char * data, size_t size);
+        bool closed{ false };
 };
 
 }

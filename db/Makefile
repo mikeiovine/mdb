@@ -12,6 +12,6 @@ all: $(OBJ)
 	$(CC) $(CPPFLAGS) -c $<
 
 clean:
-	$(RM) $(OBJ)
+	$(RM) $(OBJ) mdb
 
 .PHONY: clean all
