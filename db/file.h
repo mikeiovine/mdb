@@ -20,7 +20,7 @@ class WritableFile {
         void close();
 
     private:
-        int fd_;
+        const int fd_;
         bool closed{ false };
 };
 

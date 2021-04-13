@@ -7,8 +7,9 @@
 
 namespace mdb {
 
-WritableFile::WritableFile(const std::string& filename) {
-    fd_ = ::open(filename.c_str(), O_APPEND | O_WRONLY | O_CREAT, 0644);
+WritableFile::WritableFile(const std::string& filename) :
+    fd_{ ::open(filename.c_str(), O_APPEND | O_WRONLY | O_CREAT, 0644) } {
+    
     if (fd_ == -1) {
         throw std::system_error(errno, std::generic_category());
     }
