@@ -2,6 +2,8 @@
 
 #include "file.h"
 
+#include <memory>
+
 namespace mdb {
 
 class LogFile {
@@ -19,11 +21,11 @@ class LogFile {
         void add(const std::string& key, const std::string& value);
 
     private:
-        // TODO make sure the client does not pass this byte into key/value
         static constexpr char SEPARATOR = '\x01';
 
         void write_with_sep(const std::string& s);
-        WritableFile output_;
+        void write_with_sep(const char * s, size_t size);
+        std::unique_ptr<WritableFile> output_;
 };
 
 } // namespace mdb
