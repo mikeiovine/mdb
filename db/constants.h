@@ -1,5 +1,4 @@
-#ifndef CONSTANTS_H_
-#define CONSTANTS_H_
+#pragma once
 
 namespace mdb {
 namespace constants {
@@ -15,5 +14,3 @@ inline constexpr bool SYNC_WRITES{ false };
 
 } // namespace constants
 } // namespace mdb
-
-#endif

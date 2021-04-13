@@ -1,5 +1,4 @@
-#ifndef FILE_H_
-#define FILE_H_
+#pragma once
 
 #include <string>
 
@@ -25,6 +24,4 @@ class WritableFile {
         bool closed{ false };
 };
 
-}
-
-#endif
+} // namespace mdb
