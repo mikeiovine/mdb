@@ -1,10 +1,12 @@
-#include "log_file.h"
-#include "constants.h"
+#include "file.h"
+#include "log_writer.h"
+#include "posix.h"
 
 #include <iostream>
 
+using namespace mdb;
+
 int main() {
-    mdb::LogFile t("test.txt");
-    
-    t.add("hello", "");
+    PosixEnv e;
+    LogWriter(e.MakeWriteOnlyIO("test.txt"));
 }

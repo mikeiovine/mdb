@@ -4,24 +4,13 @@
 
 namespace mdb {
 
-class WritableFile {
+class WriteOnlyIO {
     public:
-        WritableFile(const std::string& filename);
+        virtual ~WriteOnlyIO() = default;
 
-        WritableFile(const WritableFile&) = delete;
-        WritableFile& operator=(const WritableFile&) = delete; 
-
-        WritableFile(WritableFile&&) = delete;
-        WritableFile& operator=(WritableFile&&) = delete;
-
-        ~WritableFile();
-
-        void write(const char * data, size_t size);
-        void close();
-
-    private:
-        const int fd_;
-        bool closed{ false };
+        virtual void Write(const char * data, size_t size) = 0;
+        virtual void Sync() = 0;
+        virtual void Close() = 0;
 };
 
 } // namespace mdb
