@@ -7,9 +7,6 @@
 
 namespace mdb {
 
-class PosixEnv : public Env {
-    public:
-        std::unique_ptr<WriteOnlyIO> MakeWriteOnlyIO(const std::string& filename) override;
-};
+std::unique_ptr<Env> CreateEnv();
 
 }

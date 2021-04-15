@@ -54,10 +54,17 @@ class PosixWriteOnlyFile : public WriteOnlyIO {
         bool closed_{ false };
 };
 
+class PosixEnv : public Env {
+    public:
+        std::unique_ptr<WriteOnlyIO> MakeWriteOnlyIO(const std::string& filename) override {
+            return std::make_unique<PosixWriteOnlyFile>(filename); 
+        }
+};
+
 } // namespace 
 
-std::unique_ptr<WriteOnlyIO> PosixEnv::MakeWriteOnlyIO(const std::string& filename) {
-    return std::make_unique<PosixWriteOnlyFile>(filename); 
+std::unique_ptr<Env> CreateEnv() {
+    return std::make_unique<PosixEnv>();
 }
 
 } // namespace mdb

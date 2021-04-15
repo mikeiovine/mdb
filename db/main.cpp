@@ -7,6 +7,6 @@
 using namespace mdb;
 
 int main() {
-    PosixEnv e;
-    LogWriter(e.MakeWriteOnlyIO("test.txt"));
+    auto e = CreateEnv();
+    LogWriter(e->MakeWriteOnlyIO("test.txt"));
 }

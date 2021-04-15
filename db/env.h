@@ -13,6 +13,9 @@ class Env {
 
         // TODO more
         virtual std::unique_ptr<WriteOnlyIO> MakeWriteOnlyIO(const std::string& filename) = 0;
+
+    protected:
+        Env() = default;
 };
 
 }
