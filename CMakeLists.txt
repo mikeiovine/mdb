@@ -30,7 +30,7 @@ FetchContent_MakeAvailable(googletest)
 
 enable_testing()
 
-include_directories(db)
+include_directories(db include)
 
 add_executable(
     mdb_test

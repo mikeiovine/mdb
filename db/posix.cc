@@ -1,4 +1,4 @@
-#include "posix.h"
+#include "env.h"
 
 #include <iostream>
 #include <unistd.h>
@@ -63,7 +63,7 @@ class PosixEnv : public Env {
 
 } // namespace 
 
-std::unique_ptr<Env> CreateEnv() {
+std::unique_ptr<Env> Env::CreateDefault() {
     return std::make_unique<PosixEnv>();
 }
 
