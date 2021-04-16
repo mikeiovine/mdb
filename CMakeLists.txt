@@ -13,7 +13,7 @@ add_library(
 
 add_executable(
     mdb 
-    db/main.cpp
+    db/main.cc
 )
 
 target_link_libraries(
@@ -34,7 +34,7 @@ include_directories(db include)
 
 add_executable(
     mdb_test
-    test/test_file.cpp
+    test/test_log_writer.cc
 )
 
 target_link_libraries(

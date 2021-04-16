@@ -4,12 +4,14 @@
 #include "log_writer.h"
 
 #include <iostream>
+#include <string>
 
 using namespace mdb;
 
 int main() {
     auto e = Env::CreateDefault();
-    LogWriter(e->MakeWriteOnlyIO("test.txt"));
+    LogWriter l(e->MakeWriteOnlyIO("test.txt"), false);
+    l.MarkDelete("x");
 
     auto options = MDBOptions(false);
 }
