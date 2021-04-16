@@ -69,10 +69,12 @@ class PosixReadOnlyFile : public ReadOnlyIO {
             }
         }
 
-        void Read(char * output, size_t size) override {
+        bool Read(char * output, size_t size) override {
             if (!closed_) {
-                ThrowIfError(::read(fd_, output, size));
+                auto bytes_read{ ::read(fd_, output, size) };
+                return bytes_read != 0;
             }
+            return false;
         }
 
         void Close() override {

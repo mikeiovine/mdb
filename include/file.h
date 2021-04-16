@@ -17,7 +17,7 @@ class ReadOnlyIO {
     public:
         virtual ~ReadOnlyIO() = default;
 
-        virtual void Read(char * output, size_t size);
+        virtual bool Read(char * output, size_t size) = 0;
         virtual void Close() = 0;
 };
 
