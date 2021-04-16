@@ -16,10 +16,18 @@ class WriteOnlyIOMock : public mdb::WriteOnlyIO {
         }
 
         void Sync() override {
+            for (const auto& func : on_sync_) {
+                func();
+            }
         }
 
         void Close() override {}
 
+        void SetOnSync(std::function<void(void)> func) {
+            on_sync_.push_back(std::move(func));
+        }
+
     private:
         std::vector<char>& record_;
+        std::vector<std::function<void(void)>> on_sync_;
 };

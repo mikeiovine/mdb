@@ -59,7 +59,9 @@ void LogWriter::Add(const std::string& key, const std::string& value) {
 void LogWriter::MarkDelete(const std::string& key) {
     assert(key.size() > 0);
 
-    std::vector<char> writable_data(key.size() + 2 * sizeof(size_t));
+    std::vector<char> writable_data;
+    writable_data.reserve(key.size() + 2 * sizeof(size_t));
+
     AddStringToWritable(key, writable_data);
     
     const size_t zero{ 0 };
@@ -79,6 +81,8 @@ size_t LogWriter::GetSpaceAvail() const noexcept {
 
 void LogWriter::FlushBuffer() {
     if (buf_pos_) {
+        // If syncing is on, writes should always happen instantly.
+        assert(!sync_);
         file_->Write(buf_.data(), buf_pos_);
         buf_pos_ = 0;
     }
