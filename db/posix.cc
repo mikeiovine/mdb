@@ -69,12 +69,10 @@ class PosixReadOnlyFile : public ReadOnlyIO {
             }
         }
 
-        std::string Read(size_t size) override {
-            std::vector<char> buf;
-            buf.reserve(size);
-
-            ThrowIfError(::read(fd_, buf.data(), size));
-            return std::string{ buf.data() };
+        void Read(char * output, size_t size) override {
+            if (!closed_) {
+                ThrowIfError(::read(fd_, output, size));
+            }
         }
 
         void Close() override {
