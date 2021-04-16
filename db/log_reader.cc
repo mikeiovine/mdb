@@ -16,7 +16,8 @@ std::optional<std::string> LogReader::ReadNextString() {
     std::vector<char> buf;
     buf.reserve(sizeof(size_t));
 
-    if (!file_->Read(buf.data(), sizeof(size_t))) {
+    // TODO: Log corruption where nullopt is returned
+    if (file_->ReadNoExcept(buf.data(), sizeof(size_t)) != sizeof(size_t)) {
         return std::nullopt;
     }
 
@@ -26,8 +27,15 @@ std::optional<std::string> LogReader::ReadNextString() {
         return "";
     }
     
-    buf.reserve(str_size);
-    file_->Read(buf.data(), str_size);
+    try {
+        buf.reserve(str_size);
+    } catch (const std::bad_alloc&) {
+        return std::nullopt;
+    }
+
+    if (file_->ReadNoExcept(buf.data(), str_size) != str_size) {
+        return std::nullopt;
+    }
 
     return std::string{ buf.data(), str_size };
 }
