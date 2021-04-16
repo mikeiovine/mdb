@@ -1,6 +1,8 @@
 #include "env.h"
 
-#include <iostream>
+#include <system_error>
+#include <vector>
+
 #include <unistd.h>
 #include <fcntl.h>
 
@@ -12,6 +14,7 @@ void ThrowIfError(int ret) {
         throw std::system_error(errno, std::generic_category());
     }
 }
+
 
 class PosixWriteOnlyFile : public WriteOnlyIO {
     public:
@@ -52,6 +55,38 @@ class PosixWriteOnlyFile : public WriteOnlyIO {
     private:
         const int fd_;
         bool closed_{ false };
+};
+
+
+class PosixReadOnlyFile : public ReadOnlyIO {
+    public:
+        PosixReadOnlyFile(const std::string& filename) :
+            fd_{ ::open(filename.c_str(), O_RDONLY) } {}
+
+        ~PosixReadOnlyFile() override {
+            if (!closed_ && fd_ != -1) {
+                ::close(fd_);
+            }
+        }
+
+        std::string Read(size_t size) override {
+            std::vector<char> buf;
+            buf.reserve(size);
+
+            ThrowIfError(::read(fd_, buf.data(), size));
+            return std::string{ buf.data() };
+        }
+
+        void Close() override {
+            if (!closed_) {
+                closed_ = true;
+                ThrowIfError(::close(fd_));
+            }
+        }
+        
+    private:
+        const int fd_;
+        bool closed_{ false };    
 };
 
 class PosixEnv : public Env {

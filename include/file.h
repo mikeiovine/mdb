@@ -13,4 +13,12 @@ class WriteOnlyIO {
         virtual void Close() = 0;
 };
 
+class ReadOnlyIO {
+    public:
+        virtual ~ReadOnlyIO() = default;
+
+        virtual std::string Read(size_t size);
+        virtual void Close() = 0;
+};
+
 } // namespace mdb
