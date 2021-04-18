@@ -7,16 +7,6 @@
 
 using namespace mdb;
 
-size_t ReadSizeT(const std::vector<char>& data, size_t offset) {
-    const char * buf = data.data() + offset;
-    return *reinterpret_cast<const size_t*>(buf);
-}
-
-std::string ReadString(const std::vector<char>& data, size_t offset, size_t num_bytes) {
-    const char * buf = data.data() + offset;
-    return std::string(buf, buf + num_bytes);
-}
-
 void CompareKvToOutput(
     const std::vector<char>& write_dest, 
     const std::vector<std::pair<std::string, std::string>>& pairs) {

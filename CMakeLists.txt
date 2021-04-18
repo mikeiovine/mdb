@@ -10,6 +10,7 @@ add_library(
     db/posix.cc
     db/log_writer.cc
     db/log_reader.cc
+    db/helpers.cc
 )
 
 add_executable(
@@ -37,6 +38,7 @@ add_executable(
     mdb_test
     test/test_log_writer.cc
     test/test_log_reader.cc
+    test/test_table_writer.cc
 )
 
 target_link_libraries(

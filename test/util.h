@@ -3,6 +3,16 @@
 #include "file.h"
 #include <vector>
 
+inline size_t ReadSizeT(const std::vector<char>& data, size_t offset) {
+    const char * buf = data.data() + offset;
+    return *reinterpret_cast<const size_t*>(buf);
+}
+
+inline std::string ReadString(const std::vector<char>& data, size_t offset, size_t num_bytes) {
+    const char * buf = data.data() + offset;
+    return std::string(buf, buf + num_bytes);
+}
+
 class WriteOnlyIOMock : public mdb::WriteOnlyIO {
     public:
         WriteOnlyIOMock(std::vector<char>& output) : record_{ output } {}

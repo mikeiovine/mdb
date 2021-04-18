@@ -2,27 +2,9 @@
 #include <system_error>
 
 #include "log_writer.h"
+#include "helpers.h"
 
 namespace mdb {
-
-namespace {
-
-void AddStringToWritable(const std::string& str, std::vector<char>& writable) {
-    size_t str_size{ str.size() };
-    char * size_bytes{ reinterpret_cast<char*>(&str_size) };
-
-    writable.insert(
-        writable.end(),
-        size_bytes,
-        size_bytes + sizeof(size_t));
-
-    writable.insert(
-        writable.end(),
-        str.begin(),
-        str.end());
-}
-
-} // namespace
 
 LogWriter::LogWriter(std::unique_ptr<WriteOnlyIO> file, bool sync) : 
     file_{ std::move(file) }, sync_{ sync } {
@@ -50,8 +32,8 @@ void LogWriter::Add(const std::string& key, const std::string& value) {
     std::vector<char> writable_data; 
     writable_data.reserve(key.size() + value.size() + 2 * sizeof(size_t));
 
-    AddStringToWritable(key, writable_data);
-    AddStringToWritable(value, writable_data);
+    util::AddStringToWritable(key, writable_data);
+    util::AddStringToWritable(value, writable_data);
 
     Append(writable_data);
 }
@@ -62,7 +44,7 @@ void LogWriter::MarkDelete(const std::string& key) {
     std::vector<char> writable_data;
     writable_data.reserve(key.size() + 2 * sizeof(size_t));
 
-    AddStringToWritable(key, writable_data);
+    util::AddStringToWritable(key, writable_data);
     
     const size_t zero{ 0 };
     const char * zero_size_bytes{ reinterpret_cast<const char*>(&zero) };
