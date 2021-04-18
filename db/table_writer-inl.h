@@ -3,14 +3,32 @@
 namespace mdb {
 
 template <class MemTableT>
+std::map<std::string, size_t> UncompressedTableWriter<MemTableT>::GetIndex() {
+    return index_;
+}
+
+template <class MemTableT>
 void UncompressedTableWriter<MemTableT>::WriteMemtable(const MemTableT& memtable) {
+    size_t block_marked{ false };
+
     for (auto it = memtable.cbegin(); it != memtable.cend(); it++) {
+        if (!block_marked) {
+            index_[it->first] = cur_index_;
+            block_marked = true;
+        }
+
         Add(it->first, it->second);
+
         if (buf_.size() >= block_size_) {
+            block_marked = false;
+            cur_index_ += buf_.size();
             Flush();
         } 
     }
-    Flush();
+
+    if (buf_.size() > 0) {
+        Flush();
+    }
 }
 
 template <class MemTableT>
@@ -33,14 +51,12 @@ void UncompressedTableWriter<MemTableT>::Add(const std::string& key, const std::
 template <class MemTableT>
 void UncompressedTableWriter<MemTableT>::Flush() {
     assert(file_ != nullptr);
-    
-    if (buf_.size() > 0) {
-        assert(buf_.size() >= sizeof(size_t));
-        *reinterpret_cast<size_t*>(buf_.data()) = buf_.size() - sizeof(size_t);
-        file_->Write(buf_.data(), buf_.size());
-        if (sync_) {
-            file_->Sync();
-        }
+    assert(buf_.size() >= sizeof(size_t));
+
+    *reinterpret_cast<size_t*>(buf_.data()) = buf_.size() - sizeof(size_t);
+    file_->Write(buf_.data(), buf_.size());
+    if (sync_) {
+        file_->Sync();
     }
 
     buf_.clear();

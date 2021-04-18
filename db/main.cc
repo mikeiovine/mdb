@@ -9,9 +9,4 @@
 using namespace mdb;
 
 int main() {
-    auto e = Env::CreateDefault();
-    LogWriter l(e->MakeWriteOnlyIO("test.txt"), false);
-    l.MarkDelete("x");
-
-    auto options = MDBOptions(false);
 }

@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "file.h"
+#include "table.h"
 #include "helpers.h"
 
 namespace mdb {
@@ -16,6 +17,8 @@ class TableWriter {
        virtual ~TableWriter() = default;
        
        virtual void WriteMemtable(const MemTableT& memtable) = 0;
+
+       virtual std::map<std::string, size_t> GetIndex() = 0;
 };
 
 
@@ -34,6 +37,8 @@ class UncompressedTableWriter : public TableWriter<MemTableT> {
 
         void WriteMemtable(const MemTableT& memtable) override;
 
+        std::map<std::string, size_t> GetIndex() override;
+
     private:
         std::vector<char> buf_;
 
@@ -41,8 +46,12 @@ class UncompressedTableWriter : public TableWriter<MemTableT> {
         void Flush();
 
         std::unique_ptr<WriteOnlyIO> file_;
+        std::map<std::string, size_t> index_; 
+
         const bool sync_;
         const size_t block_size_;
+
+        size_t cur_index_{ 0 };
 };
 
 } // namespace mdb

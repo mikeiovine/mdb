@@ -75,6 +75,10 @@ class ReadOnlyIOMock : public mdb::ReadOnlyIO {
             closed_ = true;
         }
 
+        void Seek(size_t offset) override {
+            read_pos_ = offset;  
+        }
+
     private:
         bool closed_{ false };
         std::vector<char> input_;

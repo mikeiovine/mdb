@@ -149,3 +149,47 @@ TEST(TestUncompressedTableWriter, TestContentsBlocks) {
         MemTableOrderedT(to_write.begin(), 
         to_write.end()));
 }
+
+/**
+ * Test the correctness of the TableWriter's index.
+ * The index is a map returned by GetIndex. For the uncompressed format,
+ * it should store (key, offset) pairs, where offset is the start
+ * of the block starting with key.
+ */
+TEST(TestUncompressedTableWriter, TestIndex) {
+    std::vector<char> output;
+    auto io{ std::make_unique<WriteOnlyIOMock>(output) };
+    bool sync{ false };
+    size_t block_size{ 16 + 5 * sizeof(size_t) };
+
+    MemTableT to_write{
+        // First block
+        {"1", "1234567891"},
+        {"2", "efgh"},
+        // Second
+        {"3", std::string('1', block_size + 1)},
+        // Third
+        {"4", "a"},
+        {"5", "b"}
+    };
+
+    UncompressedTableWriterT writer{
+        std::move(io),
+        sync,
+        block_size };
+
+    size_t first_block_size = 
+        2 + to_write["1"].size() + to_write["2"].size() + 4 * sizeof(size_t);
+
+    size_t second_block_size =
+        1 + to_write["3"].size() + 2 * sizeof(size_t);
+
+    std::map<std::string, size_t> expected{
+        {"1", 0},
+        {"3", first_block_size + sizeof(size_t)},
+        {"4", second_block_size + first_block_size + 2 * sizeof(size_t)}
+    };
+
+    writer.WriteMemtable(to_write);
+    ASSERT_EQ(expected, writer.GetIndex());
+}
