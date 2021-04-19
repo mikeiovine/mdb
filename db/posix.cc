@@ -106,8 +106,12 @@ class PosixReadOnlyFile : public ReadOnlyIO {
 
 class PosixEnv : public Env {
     public:
-        std::unique_ptr<WriteOnlyIO> MakeWriteOnlyIO(const std::string& filename) override {
+        std::unique_ptr<WriteOnlyIO> MakeWriteOnlyIO(const std::string& filename) const override {
             return std::make_unique<PosixWriteOnlyFile>(filename); 
+        }
+
+        std::unique_ptr<ReadOnlyIO> MakeReadOnlyIO(const std::string& filename) const override {
+            return std::make_unique<PosixReadOnlyFile>(filename); 
         }
 };
 

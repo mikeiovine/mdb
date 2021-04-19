@@ -13,8 +13,8 @@ class Env {
         
         static std::unique_ptr<Env> CreateDefault();
 
-        // TODO more
-        virtual std::unique_ptr<WriteOnlyIO> MakeWriteOnlyIO(const std::string& filename) = 0;
+        virtual std::unique_ptr<WriteOnlyIO> MakeWriteOnlyIO(const std::string& filename) const = 0;
+        virtual std::unique_ptr<ReadOnlyIO> MakeReadOnlyIO(const std::string& filename) const = 0;
 };
 
 }
