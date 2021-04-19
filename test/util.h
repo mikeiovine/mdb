@@ -13,6 +13,21 @@ inline std::string ReadString(const std::vector<char>& data, size_t offset, size
     return std::string(buf, buf + num_bytes);
 }
 
+inline void WriteSizeT(std::vector<char>& buf, size_t size) {
+    char * size_ptr{ reinterpret_cast<char*>(&size) };
+    buf.insert(
+        buf.end(),
+        size_ptr,
+        size_ptr + sizeof(size_t));
+}
+
+inline void WriteString(std::vector<char>& buf, const std::string& str) {
+    buf.insert(
+        buf.end(),
+        str.cbegin(),
+        str.cend());
+}
+
 class WriteOnlyIOMock : public mdb::WriteOnlyIO {
     public:
         WriteOnlyIOMock(std::vector<char>& output) : record_{ output } {}

@@ -24,6 +24,8 @@ class ReadOnlyIO {
         }
 
         virtual void Close() = 0;
+
+        virtual void Seek(size_t offset) = 0;
 };
 
 } // namespace mdb

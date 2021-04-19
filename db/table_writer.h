@@ -6,7 +6,6 @@
 #include <vector>
 
 #include "file.h"
-#include "table.h"
 #include "helpers.h"
 
 namespace mdb {

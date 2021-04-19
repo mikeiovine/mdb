@@ -92,6 +92,12 @@ class PosixReadOnlyFile : public ReadOnlyIO {
                 ThrowIfError(::close(fd_));
             }
         }
+
+        void Seek(size_t offset) override {
+            if (!closed_) {
+                ThrowIfError(::lseek(fd_, static_cast<off_t>(offset), SEEK_SET));
+            }
+        }
         
     private:
         const int fd_;

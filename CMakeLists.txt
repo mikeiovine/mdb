@@ -11,6 +11,7 @@ add_library(
     db/log_writer.cc
     db/log_reader.cc
     db/helpers.cc
+    db/table_reader.cc
 )
 
 add_executable(
@@ -39,6 +40,7 @@ add_executable(
     test/test_log_writer.cc
     test/test_log_reader.cc
     test/test_table_writer.cc
+    test/test_table_reader.cc
 )
 
 target_link_libraries(

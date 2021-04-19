@@ -18,29 +18,14 @@ size_t PairSize(const std::pair<std::string, std::string>& pair) {
     return pair.first.size() + pair.second.size();
 }
 
-void WriteSize(std::vector<char>& buf, size_t size) {
-    char * size_ptr{ reinterpret_cast<char*>(&size) };
-    buf.insert(
-        buf.end(),
-        size_ptr,
-        size_ptr + sizeof(size_t));
-}
-
-void WriteString(std::vector<char>& buf, const std::string& str) {
-    buf.insert(
-        buf.end(),
-        str.cbegin(),
-        str.cend());
-}
-
 std::vector<char> ConstructInput(const SequenceT& seq) {
     std::vector<char> buf;
 
     for (auto& kv : seq) {
-        WriteSize(buf, kv.first.size());
+        WriteSizeT(buf, kv.first.size());
         WriteString(buf, kv.first);
 
-        WriteSize(buf, kv.second.size());
+        WriteSizeT(buf, kv.second.size());
         if (kv.second.size() > 0) {
             WriteString(buf, kv.second);
         } 
