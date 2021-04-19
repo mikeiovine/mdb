@@ -21,7 +21,9 @@ struct MDBOptions {
     
     // If true, force sync with disk (e.g. via a call to fsync())
     // after every write. 
-    const bool write_sync; 
+    const bool write_sync;
+
+    size_t block_size{ 4096 };
 };
 
 }
