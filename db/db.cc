@@ -9,11 +9,31 @@ DB::DB(Options opt) :
 void DB::Put(const std::string& key, const std::string& value) {
     std::unique_lock<std::mutex> lk(write_mutex_);
     LogWrite(key, value);
+    
+    std::unique_lock memtable_lk(memtable_mutex_);
     UpdateMemtable(key, value);
+
+    if (cache_size_ > options_.memtable_max_size) {
+        WriteMemtable(); 
+        memtable_.clear();
+    }
 }
 
 std::string DB::Get(const std::string& key) {
-    // TODO
+    std::shared_lock lk(memtable_mutex_);
+
+    auto value_loc{ memtable_.find(key) };
+    if (value_loc != memtable_.end()) {
+        return value_loc->second;
+    }
+
+    // Readers should be most recent first.
+    for (const auto& reader : readers_) {
+        auto val{ reader->ValueOf(key) };
+        if (val.size() > 0) {
+            return val;
+        }
+    }
     return "";
 }
 
@@ -40,14 +60,10 @@ void DB::UpdateMemtable(const std::string& key, const std::string& value) {
             memtable_.erase(pos);
         }
     }
-
-    if (cache_size_ > options_.memtable_max_size) {
-        WriteMemtable(); 
-    }
 }
 
 void DB::WriteMemtable() {
-    readers_.push_back(
+    readers_.push_front(
         options_.table_factory->MakeTable(
             next_table_,
             options_,

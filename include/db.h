@@ -6,6 +6,8 @@
 
 #include <string>
 #include <mutex>
+#include <list>
+#include <shared_mutex>
 
 namespace mdb {
 
@@ -27,6 +29,7 @@ class DB {
         LogWriter logger_;
 
         std::mutex write_mutex_;
+        std::shared_mutex memtable_mutex_;
 
         int next_log_{ 1 };
         int next_table_{ 0 };
@@ -35,7 +38,7 @@ class DB {
 
         MemTableT memtable_;
 
-        std::vector<std::unique_ptr<TableReader>> readers_;
+        std::list<std::unique_ptr<TableReader>> readers_;
 };
 
 }

@@ -11,7 +11,9 @@ int main() {
     opt.path = "db_files/";
     DB db(opt);
 
-    for (long i = 0; i < 1000000000000; i++) {
-        db.Put("hello" + std::to_string(i), "world");
+    for (long i = 0; i < 10000000; i++) {
+        auto key{ "hello" + std::to_string(i) };
+        db.Put(key, "world");
+        assert(db.Get(key) == "world");
     }
 }
