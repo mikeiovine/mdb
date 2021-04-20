@@ -5,12 +5,14 @@
 #include <array>
 
 #include "file.h"
+#include "options.h"
 
 namespace mdb {
 
 class LogWriter {
     public:
-        explicit LogWriter(std::unique_ptr<WriteOnlyIO> file, bool sync);
+        explicit LogWriter(int log_number, const Options& options);
+        LogWriter(std::unique_ptr<WriteOnlyIO> file, bool sync);
 
         LogWriter(const LogWriter&) = delete;
         LogWriter& operator=(const LogWriter&) = delete;
@@ -24,6 +26,8 @@ class LogWriter {
         void MarkDelete(const std::string& key);
 
         void FlushBuffer();
+
+        size_t Size() const noexcept;
 
     private:
         static constexpr size_t kBlockSize{ 512 };
@@ -39,6 +43,9 @@ class LogWriter {
         std::array<char, kBlockSize> buf_;
 
         int buf_pos_{ 0 };
+
+        size_t size_{ 0 };
+
         bool sync_;
 };
 

@@ -117,8 +117,8 @@ class PosixEnv : public Env {
 
 } // namespace 
 
-std::unique_ptr<Env> Env::CreateDefault() {
-    return std::make_unique<PosixEnv>();
+std::shared_ptr<Env> Env::CreateDefault() {
+    return std::make_shared<PosixEnv>();
 }
 
 } // namespace mdb

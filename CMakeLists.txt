@@ -14,6 +14,7 @@ add_library(
     db/table_reader.cc
     db/table_writer.cc
     db/table_factory.cc
+    db/db.cc
 )
 
 add_executable(

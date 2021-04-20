@@ -6,11 +6,13 @@
 
 #include "file.h"
 #include "memtable.h"
+#include "options.h"
 
 namespace mdb {
 
 class LogReader {
     public:
+        LogReader(int log_number, const Options& options);
         LogReader(std::unique_ptr<ReadOnlyIO> file);
         
         MemTableT ReadMemTable();

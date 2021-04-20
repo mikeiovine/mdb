@@ -1,12 +1,15 @@
 #include "table_factory.h"
 #include "table_writer.h"
+#include "options.h"
 
 namespace mdb {
 
 std::unique_ptr<TableReader> UncompressedTableFactory::MakeTable(
-    const std::string& filename,
+    int table_number,
     const Options& options,
     const MemTableT& memtable) {
+
+    std::string filename{ util::TableFileName(options, table_number) };
 
     UncompressedTableWriter writer{
         options.env->MakeWriteOnlyIO(filename),

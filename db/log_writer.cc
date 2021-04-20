@@ -6,6 +6,12 @@
 
 namespace mdb {
 
+LogWriter::LogWriter(int log_number, const Options& options) :
+    LogWriter(
+        options.env->MakeWriteOnlyIO(
+            util::LogFileName(options, log_number)),
+        options.write_sync) {}
+
 LogWriter::LogWriter(std::unique_ptr<WriteOnlyIO> file, bool sync) : 
     file_{ std::move(file) }, sync_{ sync } {
 
@@ -66,6 +72,7 @@ void LogWriter::FlushBuffer() {
         // If syncing is on, writes should always happen instantly.
         assert(!sync_);
         file_->Write(buf_.data(), buf_pos_);
+        size_ += buf_pos_;
         buf_pos_ = 0;
     }
 }
@@ -94,6 +101,10 @@ void LogWriter::Append(const std::vector<char>& data) {
     } else {
         BufferData(data);
     }
+}
+
+size_t LogWriter::Size() const noexcept {
+    return size_ + buf_pos_;
 }
 
 } // namespace mdb

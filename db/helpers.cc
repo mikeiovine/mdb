@@ -1,4 +1,5 @@
 #include "helpers.h"
+#include "options.h"
 
 namespace mdb {
 namespace util {
@@ -16,6 +17,14 @@ void AddStringToWritable(const std::string& str, std::vector<char>& writable) {
         writable.end(),
         str.begin(),
         str.end());
+}
+
+std::string LogFileName(const Options& options, int number) {
+    return options.path + "log" + std::to_string(number) + ".dat";
+}
+
+std::string TableFileName(const Options& options, int number) {
+    return options.path + "table" + std::to_string(number) + ".mdb";
 }
 
 } // namespace util

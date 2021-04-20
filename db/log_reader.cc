@@ -1,9 +1,15 @@
 #include "log_reader.h"
+#include "helpers.h"
 
 #include <cassert>
 #include <vector>
 
 namespace mdb {
+
+LogReader::LogReader(int log_number, const Options& options) :
+    LogReader(
+        options.env->MakeReadOnlyIO(
+            util::LogFileName(options, log_number))) {}
 
 LogReader::LogReader(std::unique_ptr<ReadOnlyIO> file) : 
     file_{ std::move(file) } {

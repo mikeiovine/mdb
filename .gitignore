@@ -30,3 +30,7 @@
 *.exe
 *.out
 *.app
+
+# MDB
+*.dat
+db_files/
