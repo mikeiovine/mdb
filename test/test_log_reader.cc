@@ -12,7 +12,6 @@ using namespace mdb;
 namespace {
 
 using SequenceT = std::vector<std::pair<std::string, std::string>>;
-using MemTableT = std::map<std::string, std::string>;
 
 size_t PairSize(const std::pair<std::string, std::string>& pair) {
     return pair.first.size() + pair.second.size();
@@ -52,7 +51,7 @@ TEST(TestLogReader, TestLogReaderNoDeletes) {
     
     LogReader reader{ std::move(io) };
 
-    MemTableT memtable{ reader.ReadMemTable<MemTableT>() };
+    MemTableT memtable{ reader.ReadMemTable() };
 
     MemTableT expected{
         {"abc", "overwritten_key"},
@@ -80,7 +79,7 @@ TEST(TestLogReader, TestLogReaderWithDeletes) {
     
     LogReader reader{ std::move(io) };
 
-    MemTableT memtable{ reader.ReadMemTable<MemTableT>() };
+    MemTableT memtable{ reader.ReadMemTable() };
 
     MemTableT expected{
         {"abc", "def"}
@@ -120,7 +119,7 @@ TEST(TestLogReader, TestLogReaderCorruptionHugeKeySize) {
     
     LogReader reader{ std::move(io) };
 
-    MemTableT memtable{ reader.ReadMemTable<MemTableT>() };
+    MemTableT memtable{ reader.ReadMemTable() };
     MemTableT expected{
         {"abc", "def"},
         {"notdeleted", "val"}
@@ -155,7 +154,7 @@ TEST(TestLogReader, TestLogReaderCorruptionHugeValueSize) {
     
     LogReader reader{ std::move(io) };
 
-    MemTableT memtable{ reader.ReadMemTable<MemTableT>() };
+    MemTableT memtable{ reader.ReadMemTable() };
     MemTableT expected{
         {"abc", "def"},
         {"notdeleted", "val"}
@@ -183,7 +182,7 @@ TEST(TestLogReader, TestLogReaderCorruptionKeyWithNoValue) {
     
     LogReader reader{ std::move(io) };
 
-    MemTableT memtable{ reader.ReadMemTable<MemTableT>() };
+    MemTableT memtable{ reader.ReadMemTable() };
     MemTableT expected{
         {"abc", "def"}
     };

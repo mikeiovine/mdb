@@ -6,12 +6,12 @@
 
 namespace mdb {
 
-struct MDBOptions {
-    MDBOptions(bool write_sync_ = false) : 
+struct Options {
+    Options(bool write_sync_ = false) : 
         env{ Env::CreateDefault() }, 
         write_sync{ write_sync_ } {}
 
-    MDBOptions(
+    Options(
         std::unique_ptr<Env> env_, 
         bool write_sync_ = false) : 
         env{ std::move(env_) },

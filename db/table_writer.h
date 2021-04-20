@@ -7,10 +7,10 @@
 
 #include "file.h"
 #include "helpers.h"
+#include "memtable.h"
 
 namespace mdb {
 
-template <class MemTableT>
 class TableWriter {
     public:
        virtual ~TableWriter() = default;
@@ -21,8 +21,7 @@ class TableWriter {
 };
 
 
-template <class MemTableT>
-class UncompressedTableWriter : public TableWriter<MemTableT> {
+class UncompressedTableWriter : public TableWriter {
     public:
         UncompressedTableWriter(
             std::unique_ptr<WriteOnlyIO> file,
@@ -54,5 +53,3 @@ class UncompressedTableWriter : public TableWriter<MemTableT> {
 };
 
 } // namespace mdb
-
-#include "table_writer-inl.h"

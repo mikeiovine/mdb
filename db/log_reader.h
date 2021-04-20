@@ -5,6 +5,7 @@
 #include <optional>
 
 #include "file.h"
+#include "memtable.h"
 
 namespace mdb {
 
@@ -12,7 +13,6 @@ class LogReader {
     public:
         LogReader(std::unique_ptr<ReadOnlyIO> file);
         
-        template <class MemTableT>
         MemTableT ReadMemTable();
 
     private:
@@ -21,5 +21,3 @@ class LogReader {
 };
 
 } // namespace mdb
-
-#include "log_reader-inl.h"

@@ -10,8 +10,6 @@
 
 using namespace mdb;
 
-using MemTableT = std::map<std::string, std::string>;
-using UncompressedTableWriterT = UncompressedTableWriter<MemTableT>;
 using MemTableOrderedT = std::vector<std::pair<std::string, std::string>>;
 
 /**
@@ -105,7 +103,7 @@ TEST(TestUncompressedTableWriter, TestCorrectNumBlocks) {
         {"5", "b"}
     };
 
-    UncompressedTableWriterT writer{
+    UncompressedTableWriter writer{
         std::move(io),
         sync,
         block_size };
@@ -137,7 +135,7 @@ TEST(TestUncompressedTableWriter, TestContentsBlocks) {
         {"5", "b"}
     };
 
-    UncompressedTableWriterT writer{
+    UncompressedTableWriter writer{
         std::move(io),
         sync,
         block_size };
@@ -173,7 +171,7 @@ TEST(TestUncompressedTableWriter, TestIndex) {
         {"5", "b"}
     };
 
-    UncompressedTableWriterT writer{
+    UncompressedTableWriter writer{
         std::move(io),
         sync,
         block_size };

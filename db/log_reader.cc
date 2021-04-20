@@ -40,4 +40,26 @@ std::optional<std::string> LogReader::ReadNextString() {
     return std::string{ buf.data(), str_size };
 }
 
+MemTableT LogReader::ReadMemTable() {
+    MemTableT memtable;
+
+    auto key = ReadNextString();
+    auto value = ReadNextString();
+
+    while (key && value) {
+        if (value->size() > 0) {
+            memtable.insert_or_assign(key.value(), value.value());
+        } else {
+            memtable.erase(key.value());
+        }
+
+        key = ReadNextString();
+        if (key) {
+            value = ReadNextString();
+        }
+    }
+
+    return memtable;
 }
+
+} // namespace mdb

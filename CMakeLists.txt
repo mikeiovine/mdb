@@ -12,6 +12,8 @@ add_library(
     db/log_reader.cc
     db/helpers.cc
     db/table_reader.cc
+    db/table_writer.cc
+    db/table_factory.cc
 )
 
 add_executable(

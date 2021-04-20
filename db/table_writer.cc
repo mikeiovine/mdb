@@ -1,14 +1,12 @@
-#pragma once
+#include "table_writer.h"
 
 namespace mdb {
 
-template <class MemTableT>
-std::map<std::string, size_t> UncompressedTableWriter<MemTableT>::GetIndex() {
+std::map<std::string, size_t> UncompressedTableWriter::GetIndex() {
     return index_;
 }
 
-template <class MemTableT>
-void UncompressedTableWriter<MemTableT>::WriteMemtable(const MemTableT& memtable) {
+void UncompressedTableWriter::WriteMemtable(const MemTableT& memtable) {
     size_t block_marked{ false };
 
     for (auto it = memtable.cbegin(); it != memtable.cend(); it++) {
@@ -31,8 +29,7 @@ void UncompressedTableWriter<MemTableT>::WriteMemtable(const MemTableT& memtable
     }
 }
 
-template <class MemTableT>
-void UncompressedTableWriter<MemTableT>::Add(const std::string& key, const std::string& value) {
+void UncompressedTableWriter::Add(const std::string& key, const std::string& value) {
     assert(key.size() > 0 && value.size() > 0); 
     
     // Placeholder bytes; we'll put the real size when we flush
@@ -48,8 +45,7 @@ void UncompressedTableWriter<MemTableT>::Add(const std::string& key, const std::
     util::AddStringToWritable(value, buf_); 
 }
 
-template <class MemTableT>
-void UncompressedTableWriter<MemTableT>::Flush() {
+void UncompressedTableWriter::Flush() {
     assert(file_ != nullptr);
     assert(buf_.size() >= sizeof(size_t));
 
