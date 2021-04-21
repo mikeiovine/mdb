@@ -2,7 +2,7 @@
 
 namespace mdb {
 
-std::map<std::string, size_t> UncompressedTableWriter::GetIndex() {
+IndexT UncompressedTableWriter::GetIndex() {
     return index_;
 }
 
@@ -11,7 +11,7 @@ void UncompressedTableWriter::WriteMemtable(const MemTableT& memtable) {
 
     for (auto it = memtable.cbegin(); it != memtable.cend(); it++) {
         if (!block_marked) {
-            index_[it->first] = cur_index_;
+            index_.emplace(it->first, cur_index_);
             block_marked = true;
         }
 
@@ -29,7 +29,7 @@ void UncompressedTableWriter::WriteMemtable(const MemTableT& memtable) {
     }
 }
 
-void UncompressedTableWriter::Add(const std::string& key, const std::string& value) {
+void UncompressedTableWriter::Add(std::string_view key, std::string_view value) {
     assert(key.size() > 0 && value.size() > 0); 
     
     // Placeholder bytes; we'll put the real size when we flush

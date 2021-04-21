@@ -22,8 +22,8 @@ class LogWriter {
 
         ~LogWriter();
 
-        void Add(const std::string& key, const std::string& value); 
-        void MarkDelete(const std::string& key);
+        void Add(std::string_view key, std::string_view value); 
+        void MarkDelete(std::string_view key);
 
         void FlushBuffer();
 

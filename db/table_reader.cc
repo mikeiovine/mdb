@@ -5,7 +5,7 @@
 
 namespace mdb {
 
-std::string UncompressedTableReader::ValueOf(const std::string& key) {
+std::string UncompressedTableReader::ValueOf(std::string_view key) {
     auto lwr{ index_.upper_bound(key) }; 
     if (lwr != index_.begin()) {
         --lwr;
@@ -19,7 +19,7 @@ std::string UncompressedTableReader::ValueOf(const std::string& key) {
 
 std::string UncompressedTableReader::SearchInBlock(
     size_t block_loc,     
-    const std::string& key_to_find) {
+    std::string_view key_to_find) {
 
     assert(file_ != nullptr);
     file_->Seek(block_loc);

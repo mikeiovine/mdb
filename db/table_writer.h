@@ -7,7 +7,7 @@
 
 #include "file.h"
 #include "helpers.h"
-#include "memtable.h"
+#include "types.h"
 
 namespace mdb {
 
@@ -17,7 +17,7 @@ class TableWriter {
        
        virtual void WriteMemtable(const MemTableT& memtable) = 0;
 
-       virtual std::map<std::string, size_t> GetIndex() = 0;
+       virtual IndexT GetIndex() = 0;
 };
 
 
@@ -35,16 +35,16 @@ class UncompressedTableWriter : public TableWriter {
 
         void WriteMemtable(const MemTableT& memtable) override;
 
-        std::map<std::string, size_t> GetIndex() override;
+        IndexT GetIndex() override;
 
     private:
         std::vector<char> buf_;
 
-        void Add(const std::string& key, const std::string& value);
+        void Add(std::string_view key, std::string_view value);
         void Flush();
 
         std::unique_ptr<WriteOnlyIO> file_;
-        std::map<std::string, size_t> index_; 
+        IndexT index_; 
 
         const bool sync_;
         const size_t block_size_;

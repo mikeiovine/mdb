@@ -9,7 +9,7 @@ class Options;
 
 namespace util {
 
-void AddStringToWritable(const std::string& str, std::vector<char>& writable);
+void AddStringToWritable(std::string_view str, std::vector<char>& writable);
 
 std::string LogFileName(const Options& options, int number);
 

@@ -182,7 +182,7 @@ TEST(TestUncompressedTableWriter, TestIndex) {
     size_t second_block_size =
         1 + to_write["3"].size() + 2 * sizeof(size_t);
 
-    std::map<std::string, size_t> expected{
+    IndexT expected{
         {"1", 0},
         {"3", first_block_size + sizeof(size_t)},
         {"4", second_block_size + first_block_size + 2 * sizeof(size_t)}

@@ -10,8 +10,6 @@ struct BlockT {
     std::vector<char> data;
 };
 
-using IndexT = std::map<std::string, size_t>;
-
 BlockT ConstructBlock(const std::map<std::string, std::string>& pairs) {
     BlockT block;
     WriteSizeT(block.data, 0);
@@ -43,9 +41,9 @@ std::vector<char> ConstructTable(const std::vector<BlockT> blocks) {
     return res;
 }
 
-std::map<std::string, size_t> ConstructIndex(const std::vector<char>& buf) {
+IndexT ConstructIndex(const std::vector<char>& buf) {
     size_t pos{ 0 };
-    std::map<std::string, size_t> idx;
+    IndexT idx;
 
     while (pos < buf.size()) {
         size_t block_size{ ReadSizeT(buf, pos) };

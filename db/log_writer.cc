@@ -29,7 +29,7 @@ LogWriter::~LogWriter() {
     }
 }
 
-void LogWriter::Add(const std::string& key, const std::string& value) {
+void LogWriter::Add(std::string_view key, std::string_view value) {
     assert(key.size() > 0 && value.size() > 0);
 
     // For the purposes of exception safety, we write everything together.
@@ -44,7 +44,7 @@ void LogWriter::Add(const std::string& key, const std::string& value) {
     Append(writable_data);
 }
 
-void LogWriter::MarkDelete(const std::string& key) {
+void LogWriter::MarkDelete(std::string_view key) {
     assert(key.size() > 0);
 
     std::vector<char> writable_data;

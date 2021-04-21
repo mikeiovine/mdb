@@ -4,7 +4,7 @@
 namespace mdb {
 namespace util {
 
-void AddStringToWritable(const std::string& str, std::vector<char>& writable) {
+void AddStringToWritable(std::string_view str, std::vector<char>& writable) {
     size_t str_size{ str.size() };
     char * size_bytes{ reinterpret_cast<char*>(&str_size) };
 

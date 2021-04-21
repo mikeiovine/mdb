@@ -6,7 +6,7 @@ DB::DB(Options opt) :
     options_{ std::move(opt) },
     logger_{ LogWriter(0, options_) } {}
 
-void DB::Put(const std::string& key, const std::string& value) {
+void DB::Put(std::string_view key, std::string_view value) {
     std::unique_lock<std::mutex> lk(write_mutex_);
     LogWrite(key, value);
     
@@ -19,9 +19,9 @@ void DB::Put(const std::string& key, const std::string& value) {
     }
 }
 
-std::string DB::Get(const std::string& key) {
+std::string DB::Get(std::string_view key) {
     std::shared_lock lk(memtable_mutex_);
-
+    
     auto value_loc{ memtable_.find(key) };
     if (value_loc != memtable_.end()) {
         return value_loc->second;
@@ -37,7 +37,7 @@ std::string DB::Get(const std::string& key) {
     return "";
 }
 
-void DB::LogWrite(const std::string& key, const std::string& value) {
+void DB::LogWrite(std::string_view key, std::string_view value) {
     if (value.size() > 0) {
         logger_.Add(key, value);
     } else {
@@ -50,12 +50,16 @@ void DB::LogWrite(const std::string& key, const std::string& value) {
     }
 }
 
-void DB::UpdateMemtable(const std::string& key, const std::string& value) {
-    if (value.size() > 0) {
-        memtable_[key] = value;
-        cache_size_ += key.size() + value.size();
+void DB::UpdateMemtable(std::string_view key, std::string_view value) {
+    // Copy the data in the views
+    std::string value_str{ value };
+    std::string key_str{ key };
+
+    if (value_str.size() > 0) {
+        memtable_[key_str] = value_str;
+        cache_size_ += key_str.size() + value_str.size();
     } else {
-        auto pos{ memtable_.find(key) };
+        auto pos{ memtable_.find(key_str) };
         if (pos != memtable_.end()) {
             memtable_.erase(pos);
         }

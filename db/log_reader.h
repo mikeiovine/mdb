@@ -5,7 +5,7 @@
 #include <optional>
 
 #include "file.h"
-#include "memtable.h"
+#include "types.h"
 #include "options.h"
 
 namespace mdb {

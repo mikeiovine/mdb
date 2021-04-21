@@ -4,7 +4,7 @@
 
 #include "table_reader.h"
 #include "env.h"
-#include "memtable.h"
+#include "types.h"
 
 namespace mdb {
 

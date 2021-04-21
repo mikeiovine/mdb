@@ -1,7 +1,7 @@
 #pragma once
 
 #include "options.h"
-#include "memtable.h"
+#include "types.h"
 #include "log_writer.h"
 
 #include <string>
@@ -15,13 +15,13 @@ class DB {
     public:
         DB(Options options);
 
-        void Put(const std::string& key, const std::string& value);
+        void Put(std::string_view key, std::string_view value);
         
-        std::string Get(const std::string& key);
+        std::string Get(std::string_view key);
 
     private:
-        void LogWrite(const std::string& key, const std::string& value);
-        void UpdateMemtable(const std::string& key, const std::string& value);
+        void LogWrite(std::string_view key, std::string_view value);
+        void UpdateMemtable(std::string_view key, std::string_view value);
         void WriteMemtable();
 
         Options options_;
