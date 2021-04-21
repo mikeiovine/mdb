@@ -20,7 +20,6 @@ class DB {
         std::string Get(std::string_view key);
 
     private:
-        void LogWrite(std::string_view key, std::string_view value);
         void UpdateMemtable(std::string_view key, std::string_view value);
         void WriteMemtable();
 

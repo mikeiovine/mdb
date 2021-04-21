@@ -21,9 +21,6 @@ struct Options {
     // Where to write DB files.
     std::string path{ "./" };
 
-    // Max size for logfiles in bytes
-    size_t log_max_size{ 4096 * 100 * 100 };
-
     // Max size for in-memory sorted table
     size_t memtable_max_size{ 4096 * 1000 };
 

@@ -8,7 +8,12 @@ DB::DB(Options opt) :
 
 void DB::Put(std::string_view key, std::string_view value) {
     std::unique_lock<std::mutex> lk(write_mutex_);
-    LogWrite(key, value);
+
+    if (value.size() > 0) {
+        logger_.Add(key, value);
+    } else {
+        logger_.MarkDelete(key);
+    }
     
     std::unique_lock memtable_lk(memtable_mutex_);
     UpdateMemtable(key, value);
@@ -37,25 +42,6 @@ std::string DB::Get(std::string_view key) {
     return "";
 }
 
-void DB::LogWrite(std::string_view key, std::string_view value) {
-    if (value.size() > 0) {
-        logger_.Add(key, value);
-    } else {
-        logger_.MarkDelete(key);
-    }
-    
-    if (logger_.Size() > options_.log_max_size) {
-        try {
-            options_.env->RemoveFile(logger_.GetFileName());
-        } catch (const std::system_error&) {
-            // TODO log this error.
-        }
-
-        logger_ = LogWriter(next_log_, options_);
-        next_log_ += 1;
-    }
-}
-
 void DB::UpdateMemtable(std::string_view key, std::string_view value) {
     // Copy the data in the views
     std::string value_str{ value };
@@ -73,6 +59,7 @@ void DB::UpdateMemtable(std::string_view key, std::string_view value) {
 }
 
 void DB::WriteMemtable() {
+    // Flush the memtable and create a new reader.
     readers_.push_front(
         options_.table_factory->MakeTable(
             next_table_,
@@ -81,6 +68,17 @@ void DB::WriteMemtable() {
 
     cache_size_ = 0;
     next_table_ += 1;
+
+    // Now that the memtable has been written, the logfile can
+    // be removed.
+    try {
+        options_.env->RemoveFile(logger_.GetFileName());
+    } catch (const std::system_error&) {
+        // TODO log this error.
+    }
+
+    logger_ = LogWriter(next_log_, options_);
+    next_log_ += 1;
 }
 
 }
