@@ -17,6 +17,8 @@ class LogReader {
         
         MemTableT ReadMemTable();
 
+        std::string GetFileName() const noexcept;
+
     private:
         std::optional<std::string> ReadNextString();
         std::unique_ptr<ReadOnlyIO> file_;

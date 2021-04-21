@@ -18,8 +18,9 @@ void ThrowIfError(int ret) {
 
 class PosixWriteOnlyFile : public WriteOnlyIO {
     public:
-        PosixWriteOnlyFile(const std::string& filename) :
-            fd_{ ::open(filename.c_str(), O_APPEND | O_WRONLY | O_CREAT, 0644) } {
+        PosixWriteOnlyFile(std::string filename) :
+            fd_{ ::open(filename.c_str(), O_APPEND | O_WRONLY | O_CREAT, 0644) },
+            filename_{ std::move(filename) } {
             
             ThrowIfError(fd_);
         }
@@ -52,16 +53,23 @@ class PosixWriteOnlyFile : public WriteOnlyIO {
             }
         }
 
+        std::string GetFileName() const noexcept override {
+            return filename_;
+        }
+
     private:
         const int fd_;
         bool closed_{ false };
+
+        std::string filename_;
 };
 
 
 class PosixReadOnlyFile : public ReadOnlyIO {
     public:
-        PosixReadOnlyFile(const std::string& filename) :
-            fd_{ ::open(filename.c_str(), O_RDONLY) } {}
+        PosixReadOnlyFile(std::string filename) :
+            fd_{ ::open(filename.c_str(), O_RDONLY) },
+            filename_{ std::move(filename) } {}
 
         ~PosixReadOnlyFile() override {
             if (!closed_ && fd_ != -1) {
@@ -98,20 +106,29 @@ class PosixReadOnlyFile : public ReadOnlyIO {
                 ThrowIfError(::lseek(fd_, static_cast<off_t>(offset), SEEK_SET));
             }
         }
+
+        std::string GetFileName() const noexcept override {
+            return filename_;
+        }
         
     private:
         const int fd_;
-        bool closed_{ false };    
+        bool closed_{ false };
+        std::string filename_;
 };
 
 class PosixEnv : public Env {
     public:
-        std::unique_ptr<WriteOnlyIO> MakeWriteOnlyIO(const std::string& filename) const override {
-            return std::make_unique<PosixWriteOnlyFile>(filename); 
+        std::unique_ptr<WriteOnlyIO> MakeWriteOnlyIO(std::string filename) const override {
+            return std::make_unique<PosixWriteOnlyFile>(std::move(filename));
         }
 
-        std::unique_ptr<ReadOnlyIO> MakeReadOnlyIO(const std::string& filename) const override {
-            return std::make_unique<PosixReadOnlyFile>(filename); 
+        std::unique_ptr<ReadOnlyIO> MakeReadOnlyIO(std::string filename) const override {
+            return std::make_unique<PosixReadOnlyFile>(std::move(filename));
+        }
+
+        void RemoveFile(const std::string& file) override {
+            ThrowIfError(::remove(file.c_str()));
         }
 };
 

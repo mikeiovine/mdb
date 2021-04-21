@@ -11,6 +11,8 @@ class WriteOnlyIO {
         virtual void Write(const char * data, size_t size) = 0;
         virtual void Sync() = 0;
         virtual void Close() = 0;
+
+        virtual std::string GetFileName() const noexcept { return ""; }
 };
 
 class ReadOnlyIO {
@@ -26,6 +28,8 @@ class ReadOnlyIO {
         virtual void Close() = 0;
 
         virtual void Seek(size_t offset) = 0;
+
+        virtual std::string GetFileName() const noexcept { return ""; }
 };
 
 } // namespace mdb

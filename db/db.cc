@@ -45,6 +45,12 @@ void DB::LogWrite(std::string_view key, std::string_view value) {
     }
     
     if (logger_.Size() > options_.log_max_size) {
+        try {
+            options_.env->RemoveFile(logger_.GetFileName());
+        } catch (const std::system_error&) {
+            // TODO log this error.
+        }
+
         logger_ = LogWriter(next_log_, options_);
         next_log_ += 1;
     }

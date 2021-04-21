@@ -9,10 +9,10 @@ std::unique_ptr<TableReader> UncompressedTableFactory::MakeTable(
     const Options& options,
     const MemTableT& memtable) {
 
-    std::string filename{ util::TableFileName(options, table_number) };
-
     UncompressedTableWriter writer{
-        options.env->MakeWriteOnlyIO(filename),
+        options.env->MakeWriteOnlyIO(
+            util::TableFileName(options, table_number)
+        ),
         options.write_sync,
         options.block_size
     };
@@ -20,7 +20,9 @@ std::unique_ptr<TableReader> UncompressedTableFactory::MakeTable(
     writer.WriteMemtable(memtable);
 
     return std::make_unique<UncompressedTableReader>(
-        options.env->MakeReadOnlyIO(filename), 
+        options.env->MakeReadOnlyIO(
+            util::TableFileName(options, table_number)
+        ),
         writer.GetIndex());
 }
 

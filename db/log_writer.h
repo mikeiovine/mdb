@@ -29,6 +29,8 @@ class LogWriter {
 
         size_t Size() const noexcept;
 
+        std::string GetFileName() const noexcept;
+
     private:
         static constexpr size_t kBlockSize{ 512 };
 

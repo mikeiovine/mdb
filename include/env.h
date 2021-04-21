@@ -13,8 +13,10 @@ class Env {
         
         static std::shared_ptr<Env> CreateDefault();
 
-        virtual std::unique_ptr<WriteOnlyIO> MakeWriteOnlyIO(const std::string& filename) const = 0;
-        virtual std::unique_ptr<ReadOnlyIO> MakeReadOnlyIO(const std::string& filename) const = 0;
+        virtual std::unique_ptr<WriteOnlyIO> MakeWriteOnlyIO(std::string filename) const = 0;
+        virtual std::unique_ptr<ReadOnlyIO> MakeReadOnlyIO(std::string filename) const = 0;
+
+        virtual void RemoveFile(const std::string& filename) = 0;
 };
 
 }

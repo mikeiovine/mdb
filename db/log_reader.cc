@@ -68,4 +68,9 @@ MemTableT LogReader::ReadMemTable() {
     return memtable;
 }
 
+std::string LogReader::GetFileName() const noexcept {
+    assert(file_ != nullptr);
+    return file_->GetFileName(); 
+}
+
 } // namespace mdb

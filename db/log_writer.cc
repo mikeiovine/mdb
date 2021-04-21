@@ -107,4 +107,9 @@ size_t LogWriter::Size() const noexcept {
     return size_ + buf_pos_;
 }
 
+std::string LogWriter::GetFileName() const noexcept {
+    assert(file_ != nullptr);
+    return file_->GetFileName();
+}
+
 } // namespace mdb
