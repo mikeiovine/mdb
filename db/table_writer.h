@@ -13,11 +13,19 @@ namespace mdb {
 
 class TableWriter {
     public:
-       virtual ~TableWriter() = default;
-       
-       virtual void WriteMemtable(const MemTableT& memtable) = 0;
+        TableWriter() = default;
 
-       virtual IndexT GetIndex() = 0;
+        TableWriter(const TableWriter&) = delete;
+        TableWriter& operator=(const TableWriter&) = delete;
+
+        TableWriter(TableWriter&&) = delete;
+        TableWriter& operator=(TableWriter&&) = delete;
+
+        virtual ~TableWriter() = default;
+
+        virtual void WriteMemtable(const MemTableT& memtable) = 0;
+
+        virtual IndexT GetIndex() = 0;
 };
 
 

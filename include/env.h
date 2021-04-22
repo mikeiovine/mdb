@@ -9,6 +9,14 @@ namespace mdb {
 
 class Env {
     public:
+        Env() = default;
+
+        Env(const Env&) = delete;
+        Env& operator=(const Env&) = delete;
+
+        Env(Env&&) = delete;
+        Env& operator=(Env&&) = delete;
+
         virtual ~Env() = default;
         
         static std::shared_ptr<Env> CreateDefault();

@@ -9,6 +9,14 @@ namespace mdb {
 
 class TableReader {
     public:
+        TableReader() = default;
+
+        TableReader(const TableReader&) = delete;
+        TableReader& operator=(const TableReader&) = delete;
+
+        TableReader(TableReader&&) = delete;
+        TableReader& operator=(TableReader&&) = delete;
+
         virtual ~TableReader() = default;
 
         virtual std::string ValueOf(std::string_view key) = 0;
