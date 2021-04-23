@@ -13,4 +13,4 @@ using MemTableT = std::map<std::string, std::string, std::less<>>;
 
 using IndexT = std::map<std::string, size_t, std::less<>>;
 
-};
+};  // namespace mdb

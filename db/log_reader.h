@@ -1,29 +1,29 @@
 #pragma once
 
 #include <memory>
-#include <string>
 #include <optional>
+#include <string>
 
 #include "file.h"
-#include "types.h"
 #include "options.h"
+#include "types.h"
 
 namespace mdb {
 
 class LogReader {
-    public:
-        LogReader(int log_number, const Options& options);
-        LogReader(std::unique_ptr<ReadOnlyIO> file);
-        
-        MemTableT ReadMemTable();
+ public:
+  LogReader(int log_number, const Options& options);
+  LogReader(std::unique_ptr<ReadOnlyIO> file);
 
-        std::string GetFileName() const noexcept;
+  MemTableT ReadMemTable();
 
-    private:
-        std::optional<std::string> ReadNextString();
-        std::unique_ptr<ReadOnlyIO> file_;
+  std::string GetFileName() const noexcept;
 
-        size_t pos_{ 0 };
+ private:
+  std::optional<std::string> ReadNextString();
+  std::unique_ptr<ReadOnlyIO> file_;
+
+  size_t pos_{0};
 };
 
-} // namespace mdb
+}  // namespace mdb

@@ -1,7 +1,7 @@
 #pragma once
 
-#include <vector>
 #include <string>
+#include <vector>
 
 namespace mdb {
 
@@ -15,5 +15,5 @@ std::string LogFileName(const Options& options, int number);
 
 std::string TableFileName(const Options& options, int number);
 
-} // namespace util
-} // namespace mdb
+}  // namespace util
+}  // namespace mdb

@@ -1,55 +1,50 @@
 #pragma once
 
-#include <string>
-#include <map>
-#include <shared_mutex>
 #include <future>
 #include <list>
+#include <map>
+#include <shared_mutex>
+#include <string>
 
-#include "types.h"
 #include "options.h"
+#include "types.h"
 
 namespace mdb {
 
 class TableReader;
 
 class Table {
-    public:
-        using LevelT = std::list<std::unique_ptr<TableReader>>;
+ public:
+  using LevelT = std::list<std::unique_ptr<TableReader>>;
 
-        // Concurrent calls to ValueOf/WriteMemtable are safe.
-        // However, multiple concurrent calls to WriteMemtable 
-        // are unsafe: don't try to trigger multiple compactions
-        // at the same time!
-        //
-        // Additionally, WriteMemtable blocks if there is an
-        // ongoing compaction.
+  // Concurrent calls to ValueOf/WriteMemtable are safe.
+  // However, multiple concurrent calls to WriteMemtable
+  // are unsafe: don't try to trigger multiple compactions
+  // at the same time!
+  //
+  // Additionally, WriteMemtable blocks if there is an
+  // ongoing compaction.
 
-        std::string ValueOf(std::string_view key) const;
-        
-        void WriteMemtable(
-            const Options& options,
-            const MemTableT& memtable);
+  std::string ValueOf(std::string_view key) const;
 
-    private:
-        bool NeedsCompaction(int level);
-        void Compact(int level, const Options& options);
-        size_t TotalSize(int level);
-        void WaitForOnGoingCompactions();
+  void WriteMemtable(const Options& options, const MemTableT& memtable);
 
-        void WriteMemtableInternal(
-            int level, 
-            const Options& options, 
-            const MemTableT& memtable, 
-            bool async);
+ private:
+  bool NeedsCompaction(int level);
+  void Compact(int level, const Options& options);
+  size_t TotalSize(int level);
+  void WaitForOnGoingCompactions();
 
-        int next_table_{ 0 };
+  void WriteMemtableInternal(int level, const Options& options,
+                             const MemTableT& memtable, bool async);
 
-        std::map<int, LevelT> levels_;
+  int next_table_{0};
 
-        std::future<void> compaction_future_;
+  std::map<int, LevelT> levels_;
 
-        mutable std::shared_mutex level_mutex_;
+  std::future<void> compaction_future_;
+
+  mutable std::shared_mutex level_mutex_;
 };
 
-}
+}  // namespace mdb
