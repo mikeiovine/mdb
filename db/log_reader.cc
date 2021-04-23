@@ -23,9 +23,10 @@ std::optional<std::string> LogReader::ReadNextString() {
     buf.reserve(sizeof(size_t));
 
     // TODO: Log corruption where nullopt is returned
-    if (file_->ReadNoExcept(buf.data(), sizeof(size_t)) != sizeof(size_t)) {
+    if (file_->ReadNoExcept(buf.data(), sizeof(size_t), pos_) != sizeof(size_t)) {
         return std::nullopt;
     }
+    pos_ += sizeof(size_t);
 
     size_t str_size{ *reinterpret_cast<size_t*>(buf.data()) };
 
@@ -39,9 +40,10 @@ std::optional<std::string> LogReader::ReadNextString() {
         return std::nullopt;
     }
 
-    if (file_->ReadNoExcept(buf.data(), str_size) != str_size) {
+    if (file_->ReadNoExcept(buf.data(), str_size, pos_) != str_size) {
         return std::nullopt;
     }
+    pos_ += str_size;
 
     return std::string{ buf.data(), str_size };
 }

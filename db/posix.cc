@@ -5,6 +5,7 @@
 
 #include <unistd.h>
 #include <fcntl.h>
+#include <sys/stat.h>
 
 namespace mdb {
 namespace {
@@ -14,7 +15,6 @@ void ThrowIfError(int ret) {
         throw std::system_error(errno, std::generic_category());
     }
 }
-
 
 class PosixWriteOnlyFile : public WriteOnlyIO {
     public:
@@ -57,6 +57,10 @@ class PosixWriteOnlyFile : public WriteOnlyIO {
             return filename_;
         }
 
+        int GetID() const noexcept override {
+            return fd_;
+        }
+
     private:
         const int fd_;
         bool closed_{ false };
@@ -77,18 +81,18 @@ class PosixReadOnlyFile : public ReadOnlyIO {
             }
         }
 
-        size_t Read(char * output, size_t size) override {
+        size_t Read(char * output, size_t size, size_t offset) override {
             if (!closed_) {
-                auto bytes_read{ ::read(fd_, output, size) };
+                auto bytes_read{ ::pread(fd_, output, size, offset) };
                 ThrowIfError(bytes_read);
                 return bytes_read;
             }
             return 0;
         }
 
-        size_t ReadNoExcept(char * output, size_t size) noexcept override {
+        size_t ReadNoExcept(char * output, size_t size, size_t offset) noexcept override {
             try {
-                return Read(output, size);
+                return Read(output, size, offset);
             } catch (const std::system_error&) {
                 return 0;
             }
@@ -101,14 +105,18 @@ class PosixReadOnlyFile : public ReadOnlyIO {
             }
         }
 
-        void Seek(size_t offset) override {
-            if (!closed_) {
-                ThrowIfError(::lseek(fd_, static_cast<off_t>(offset), SEEK_SET));
-            }
-        }
-
         std::string GetFileName() const noexcept override {
             return filename_;
+        }
+
+        int GetID() const noexcept override {
+            return fd_;
+        }
+
+        size_t Size() const override {
+            struct stat s; 
+            ThrowIfError(::fstat(fd_, &s));
+            return s.st_size;
         }
         
     private:
@@ -132,7 +140,7 @@ class PosixEnv : public Env {
         }
 };
 
-} // namespace 
+} // namespace
 
 std::shared_ptr<Env> Env::CreateDefault() {
     return std::make_shared<PosixEnv>();

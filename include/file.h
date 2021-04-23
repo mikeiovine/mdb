@@ -21,6 +21,8 @@ class WriteOnlyIO {
         virtual void Close() = 0;
 
         virtual std::string GetFileName() const noexcept { return ""; }
+
+        virtual int GetID() const noexcept { return -1; }
 };
 
 class ReadOnlyIO {
@@ -35,17 +37,19 @@ class ReadOnlyIO {
 
         virtual ~ReadOnlyIO() = default;
 
-        virtual size_t Read(char * output, size_t size) = 0;
+        virtual size_t Read(char * output, size_t size, size_t offset) = 0;
 
-        virtual size_t ReadNoExcept(char * output, size_t size) noexcept {
-            return Read(output, size);
+        virtual size_t ReadNoExcept(char * output, size_t size, size_t offset) noexcept {
+            return Read(output, size, offset);
         }
 
         virtual void Close() = 0;
 
-        virtual void Seek(size_t offset) = 0;
-
         virtual std::string GetFileName() const noexcept { return ""; }
+
+        virtual int GetID() const noexcept { return -1; }
+
+        virtual size_t Size() const = 0;
 };
 
 } // namespace mdb

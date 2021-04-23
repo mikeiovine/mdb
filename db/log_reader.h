@@ -22,6 +22,8 @@ class LogReader {
     private:
         std::optional<std::string> ReadNextString();
         std::unique_ptr<ReadOnlyIO> file_;
+
+        size_t pos_{ 0 };
 };
 
 } // namespace mdb

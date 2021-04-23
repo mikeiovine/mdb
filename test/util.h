@@ -69,17 +69,17 @@ class ReadOnlyIOMock : public mdb::ReadOnlyIO {
     public:
         ReadOnlyIOMock(std::vector<char> input) : input_{ std::move(input) } {}
         
-        size_t Read(char * output, size_t size) override {
+        size_t Read(char * output, size_t size, size_t offset) override {
+            assert(offset <= input_.size());
             if (!closed_) {
                 size_t read_size = 
-                    std::min(input_.size() - read_pos_, size);
+                    std::min(input_.size() - offset, size);
 
                 std::copy(
-                    input_.begin() + read_pos_,
-                    input_.begin() + read_pos_ + read_size,
+                    input_.begin() + offset,
+                    input_.begin() + offset + read_size,
                     output);
 
-                read_pos_ += size;
                 return read_size;
             }
 
@@ -90,12 +90,11 @@ class ReadOnlyIOMock : public mdb::ReadOnlyIO {
             closed_ = true;
         }
 
-        void Seek(size_t offset) override {
-            read_pos_ = offset;  
+        size_t Size() const override {
+           return input_.size(); 
         }
 
     private:
         bool closed_{ false };
         std::vector<char> input_;
-        size_t read_pos_{ 0 };
 };
