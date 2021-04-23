@@ -17,6 +17,14 @@ class Table {
     public:
         using LevelT = std::list<std::unique_ptr<TableReader>>;
 
+        // Concurrent calls to ValueOf/WriteMemtable are safe.
+        // However, multiple concurrent calls to WriteMemtable 
+        // are unsafe: don't try to trigger multiple compactions
+        // at the same time!
+        //
+        // Additionally, WriteMemtable blocks if there is an
+        // ongoing compaction.
+
         std::string ValueOf(std::string_view key) const;
         
         void WriteMemtable(
@@ -41,7 +49,7 @@ class Table {
 
         std::future<void> compaction_future_;
 
-        mutable std::shared_mutex reader_mutex_;
+        mutable std::shared_mutex level_mutex_;
 };
 
 }

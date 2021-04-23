@@ -22,7 +22,7 @@ class DB {
 
     private:
         void UpdateMemtable(std::string_view key, std::string_view value);
-        void WriteMemtable();
+        void ClearMemtable();
 
         Options options_;
 

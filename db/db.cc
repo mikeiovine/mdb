@@ -17,10 +17,14 @@ void DB::Put(std::string_view key, std::string_view value) {
     
     std::unique_lock memtable_lk(memtable_mutex_);
     UpdateMemtable(key, value);
+    memtable_lk.unlock();
 
     if (cache_size_ > options_.memtable_max_size) {
-        WriteMemtable(); 
-        memtable_.clear();
+        // Flush the memtable and create a new reader.
+        table_.WriteMemtable(options_, memtable_);
+
+        memtable_lk.lock();
+        ClearMemtable();
     }
 }
 
@@ -53,9 +57,7 @@ void DB::UpdateMemtable(std::string_view key, std::string_view value) {
     }
 }
 
-void DB::WriteMemtable() {
-    // Flush the memtable and create a new reader.
-    table_.WriteMemtable(options_, memtable_);
+void DB::ClearMemtable() {
     cache_size_ = 0;
 
     // Now that the memtable has been written, the logfile can

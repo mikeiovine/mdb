@@ -9,7 +9,7 @@
 namespace mdb {
 
 std::string Table::ValueOf(std::string_view key) const {
-    std::shared_lock lk(reader_mutex_);
+    std::shared_lock lk(level_mutex_);
 
     for (const auto& levelid_and_level : levels_) {
         for (const auto& reader : levelid_and_level.second) {
@@ -31,15 +31,15 @@ void Table::WriteMemtable(const Options& options, const MemTableT& memtable) {
 void Table::WriteMemtableInternal(
     int level, const Options& options, const MemTableT& memtable, bool async) {
 
-    std::unique_lock lk(reader_mutex_);
+    std::unique_lock lk(level_mutex_);
+
     levels_[level].push_front(
         options.table_factory->MakeTable(
             next_table_,
             options,
             memtable));
-
+    
     lk.unlock();
-
     ++next_table_;
 
     if (NeedsCompaction(level)) {
@@ -126,7 +126,7 @@ void Table::Compact(int level, const Options& options) {
 
     WriteMemtableInternal(level + 1, options, memtable_temp, false);
 
-    std::unique_lock lk(reader_mutex_);
+    std::unique_lock lk(level_mutex_);
     for (const auto& reader : level_list) {
         options.env->RemoveFile(reader->GetFileName());
     }
