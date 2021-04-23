@@ -58,8 +58,14 @@ class TableIterator {
             return *this; 
         }
 
-        TableIterator(TableIterator&&) = delete;
-        TableIterator& operator=(TableIterator&&) = delete;
+        TableIterator(TableIterator&& other) {
+            impl_ = std::move(other.impl_);
+        }
+
+        TableIterator& operator=(TableIterator&& other) {
+            impl_ = std::move(other.impl_);
+            return *this;
+        }
 
         ~TableIterator() = default;
         
