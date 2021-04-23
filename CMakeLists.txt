@@ -20,15 +20,22 @@ add_library(
 
 add_executable(
     mdb 
-    db/main.cc
+    db/mdb.cc
 )
+
+include(FetchContent)
+FetchContent_Declare(
+  gflags
+  URL https://github.com/gflags/gflags/archive/master.zip
+)
+FetchContent_MakeAvailable(gflags)
 
 target_link_libraries(
     mdb
     mdb_lib
+    gflags
 )
 
-include(FetchContent)
 FetchContent_Declare(
   googletest
   URL https://github.com/google/googletest/archive/master.zip
