@@ -13,7 +13,7 @@ class UncompressedTableReader::UncompressedTableIter : public TableIteratorImpl 
             reader_{ reader },
             it_{ it } {
             
-            if (!IsDone()) {
+            if (it != reader_.index_.end()) {
                 JumpToBlock(it_->second);
                 SetCur();
 
