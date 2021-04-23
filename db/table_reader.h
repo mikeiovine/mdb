@@ -24,6 +24,10 @@ class TableReader {
 
         virtual TableIterator Begin() = 0;
         virtual TableIterator End() = 0;
+
+        virtual size_t Size() const = 0;
+
+        virtual std::string GetFileName() const noexcept { return ""; }
 };
 
 class UncompressedTableReader : public TableReader {
@@ -39,6 +43,8 @@ class UncompressedTableReader : public TableReader {
         TableIterator Begin() override;
         TableIterator End() override;
 
+        size_t Size() const override;
+
     private:
         class UncompressedTableIter;
 
@@ -46,6 +52,7 @@ class UncompressedTableReader : public TableReader {
 
         std::string ReadString(size_t size, size_t offset);
         size_t ReadSize(size_t offset);
+        std::string GetFileName() const noexcept override;
 
         std::unique_ptr<ReadOnlyIO> file_;
         const IndexT index_;

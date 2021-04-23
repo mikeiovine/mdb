@@ -14,6 +14,6 @@ int main() {
     for (long i = 0; i < 10000000; i++) {
         auto key{ "hello" + std::to_string(i) };
         db.Put(key, "world");
-        assert(db.Get(key) == "world");
+        //assert(db.Get(key) == "world");
     }
 }

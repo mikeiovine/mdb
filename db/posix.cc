@@ -19,7 +19,7 @@ void ThrowIfError(int ret) {
 class PosixWriteOnlyFile : public WriteOnlyIO {
     public:
         PosixWriteOnlyFile(std::string filename) :
-            fd_{ ::open(filename.c_str(), O_APPEND | O_WRONLY | O_CREAT, 0644) },
+            fd_{ ::open(filename.c_str(), O_TRUNC | O_APPEND | O_WRONLY | O_CREAT, 0644) },
             filename_{ std::move(filename) } {
             
             ThrowIfError(fd_);

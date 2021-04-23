@@ -36,6 +36,8 @@ class UncompressedTableReader::UncompressedTableIter : public TableIteratorImpl 
             pos_ += cur_size_;
             cur_block_pos_ += cur_size_;
 
+            assert(cur_block_pos_ <= cur_block_size_);
+
             if (cur_block_pos_ == cur_block_size_) {
                 it_++;
                 if (!IsDone()) {
@@ -171,6 +173,14 @@ TableIterator UncompressedTableReader::Begin() {
 
 TableIterator UncompressedTableReader::End() {
     return TableIterator(std::make_shared<UncompressedTableIter>(*this, index_.cend()));
+}
+
+size_t UncompressedTableReader::Size() const {
+    return file_->Size();
+}
+
+std::string UncompressedTableReader::GetFileName() const noexcept {
+    return file_->GetFileName();
 }
 
 } // namespace mdb

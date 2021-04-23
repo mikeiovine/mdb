@@ -2,6 +2,7 @@
 
 #include "options.h"
 #include "types.h"
+#include "table.h"
 #include "log_writer.h"
 
 #include <string>
@@ -31,13 +32,11 @@ class DB {
         std::shared_mutex memtable_mutex_;
 
         int next_log_{ 1 };
-        int next_table_{ 0 };
-
         size_t cache_size_{ 0 };
 
         MemTableT memtable_;
 
-        std::list<std::unique_ptr<TableReader>> readers_;
+        Table table_;
 };
 
 }

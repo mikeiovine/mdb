@@ -32,14 +32,9 @@ std::string DB::Get(std::string_view key) {
         return value_loc->second;
     }
 
-    // Readers should be most recent first.
-    for (const auto& reader : readers_) {
-        auto val{ reader->ValueOf(key) };
-        if (val.size() > 0) {
-            return val;
-        }
-    }
-    return "";
+    memtable_mutex_.unlock();
+
+    return table_.ValueOf(key);
 }
 
 void DB::UpdateMemtable(std::string_view key, std::string_view value) {
@@ -60,14 +55,8 @@ void DB::UpdateMemtable(std::string_view key, std::string_view value) {
 
 void DB::WriteMemtable() {
     // Flush the memtable and create a new reader.
-    readers_.push_front(
-        options_.table_factory->MakeTable(
-            next_table_,
-            options_,
-            memtable_));
-
+    table_.WriteMemtable(options_, memtable_);
     cache_size_ = 0;
-    next_table_ += 1;
 
     // Now that the memtable has been written, the logfile can
     // be removed.
