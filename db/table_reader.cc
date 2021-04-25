@@ -104,19 +104,20 @@ class UncompressedTableReader::UncompressedTableIter
   size_t pos_{0};
 };
 
-std::string UncompressedTableReader::ValueOf(std::string_view key) {
+std::optional<std::string> UncompressedTableReader::ValueOf(
+    std::string_view key) {
   auto lwr{index_.upper_bound(key)};
   if (lwr != index_.begin()) {
     --lwr;
   } else {
-    return "";
+    return std::nullopt;
   }
 
   size_t block_loc{lwr->second};
   return SearchInBlock(block_loc, key);
 }
 
-std::string UncompressedTableReader::SearchInBlock(
+std::optional<std::string> UncompressedTableReader::SearchInBlock(
     size_t block_loc, std::string_view key_to_find) {
   assert(file_ != nullptr);
 
@@ -138,11 +139,6 @@ std::string UncompressedTableReader::SearchInBlock(
     pos += key_size;
 
     size_t value_size{ReadSize(block_loc + pos)};
-
-    if (value_size == 0) {
-      ThrowIOError();
-    }
-
     pos += sizeof(size_t);
 
     if (key == key_to_find) {
@@ -156,7 +152,7 @@ std::string UncompressedTableReader::SearchInBlock(
     ThrowIOError();
   }
 
-  return "";
+  return std::nullopt;
 }
 
 size_t UncompressedTableReader::ReadSize(size_t offset) {

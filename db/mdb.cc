@@ -21,11 +21,15 @@ int main(int argc, char *argv[]) {
   Options opt{.path = FLAGS_path};
   DB db(opt);
 
-  /*
-  for (long i = 0; i < 10000000; i++) {
-      auto key{ "hello" + std::to_string(i) };
-      db.Put(key, "world");
-      //assert(db.Get(key) == "world");
+  for (long i = 0; i < 1500000; i++) {
+    auto key{"hello" + std::to_string(i)};
+    db.Put(key, "world");
+    if (i >= 1000) {
+      db.Delete("hello" + std::to_string(i - 1000));
+    }
   }
-  */
+
+  for (long i = 0; i < 1000000; i++) {
+    assert(db.Get("hello" + std::to_string(i)) == "");
+  }
 }

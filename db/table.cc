@@ -13,9 +13,11 @@ std::string Table::ValueOf(std::string_view key) const {
 
   for (const auto& levelid_and_level : levels_) {
     for (const auto& reader : levelid_and_level.second) {
+      // This string is possibly empty if the table has
+      // the key marked as deleted.
       auto val{reader->ValueOf(key)};
-      if (val.size() > 0) {
-        return val;
+      if (val) {
+        return val.value();
       }
     }
   }

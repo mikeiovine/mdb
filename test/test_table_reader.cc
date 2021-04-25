@@ -284,3 +284,67 @@ TEST(TestUncompressedTableReader, TestTableCorruptionHugeValueSize) {
 
   ASSERT_THROW(reader.ValueOf("abc"), std::system_error);
 }
+
+/**
+ * The table reader differentiates between values that are not
+ * found and values that are deleted. Here, we test that
+ * ValueOf returns the empty string (NOT std::nullopt) if the key
+ * is explicitly deleted in the table.
+ */
+TEST(TestUncompressedTableReader, TestDeletedValuesAreEmpty) {
+  std::vector<std::map<std::string, std::string>> key_values{
+      {{"abc", ""}, {"a", ""}}, {{"xyz", ""}}};
+
+  std::vector<BlockT> blocks;
+  for (const auto& kv_map : key_values) {
+    blocks.push_back(ConstructBlock(kv_map));
+  }
+
+  std::vector<char> buf{ConstructTable(blocks)};
+
+  auto index{ConstructIndex(buf)};
+  auto io{std::make_unique<ReadOnlyIOMock>(std::move(buf))};
+
+  auto reader{UncompressedTableReader(std::move(io), std::move(index))};
+
+  for (const auto& kv_map : key_values) {
+    for (const auto& kv : kv_map) {
+      const auto& key{kv.first};
+      const auto& value{kv.second};
+
+      ASSERT_EQ(reader.ValueOf(key), value);
+    }
+  }
+}
+
+/**
+ * The table reader differentiates between values that are not
+ * found and values that are deleted. Here, we test that
+ * ValueOf returns the std::nullopt if the key is not found in
+ * the table.
+ */
+TEST(TestUncompressedTableReader, TestNonexistantValuesAreNullopt) {
+  std::vector<std::map<std::string, std::string>> key_values{
+      {{"ba", ""}, {"bb", ""}}, {{"xyz", ""}}};
+
+  std::vector<BlockT> blocks;
+  for (const auto& kv_map : key_values) {
+    blocks.push_back(ConstructBlock(kv_map));
+  }
+
+  std::vector<char> buf{ConstructTable(blocks)};
+
+  auto index{ConstructIndex(buf)};
+  auto io{std::make_unique<ReadOnlyIOMock>(std::move(buf))};
+
+  auto reader{UncompressedTableReader(std::move(io), std::move(index))};
+
+  // Don't search any block
+  ASSERT_EQ(reader.ValueOf("a"), std::nullopt);
+
+  // Search the first block
+  ASSERT_EQ(reader.ValueOf("bc"), std::nullopt);
+
+  // Search the last block
+  ASSERT_EQ(reader.ValueOf("zzz"), std::nullopt);
+}
