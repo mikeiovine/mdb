@@ -4,15 +4,20 @@ The design is roughly based on Google's [LevelDB](https://github.com/google/leve
 In particular, the KV store is backed by a log-structured merge tree on
 disk.
 
+This is still a work-in-progress.
+
 ## Dependencies
 
 * [gflags](https://github.com/gflags/gflags)
 * [googletest](https://github.com/google/googletest) [testing only]
 
+This project will only compile on POSIX compliant operating systems.
+I did some benchmarking and found that it was much faster to do file
+IO with syscalls instead of with `iostream`.
+
 ## Basic Usage
 ```cpp
 // Setup options
-
 Options opt{
     .path = "./path/to/db_files/",
     .write_sync = false
