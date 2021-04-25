@@ -15,7 +15,7 @@ void UncompressedTableWriter::WriteMemtable(const MemTableT& memtable,
     }
 
     // Empty values correspond to deleted keys.
-    if (!write_deleted || !it->second.empty()) {
+    if (write_deleted || !it->second.empty()) {
       Add(it->first, it->second);
 
       if (buf_.size() >= block_size_) {
@@ -33,7 +33,7 @@ void UncompressedTableWriter::WriteMemtable(const MemTableT& memtable,
 
 void UncompressedTableWriter::Add(std::string_view key,
                                   std::string_view value) {
-  assert(key.size() > 0 && value.size() > 0);
+  assert(key.size() > 0);
 
   // Placeholder bytes; we'll put the real size when we flush
   if (buf_.empty()) {

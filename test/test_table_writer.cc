@@ -168,3 +168,43 @@ TEST(TestUncompressedTableWriter, TestIndex) {
   writer.WriteMemtable(to_write);
   ASSERT_EQ(expected, writer.GetIndex());
 }
+
+/**
+ * Test that the writer does not write deleted keys when
+ * write_deleted == false.
+ */
+TEST(TestUncompressedTableWriter, TestDoesNotWriteDeleted) {
+  std::vector<char> output;
+  auto io{std::make_unique<WriteOnlyIOMock>(output)};
+  bool sync{false};
+  size_t block_size{16 + 5 * sizeof(size_t)};
+
+  MemTableT to_write{{"1", ""}, {"2", ""}, {"3", ""}, {"4", "a"}, {"5", "b"}};
+
+  UncompressedTableWriter writer{std::move(io), sync, block_size};
+
+  writer.WriteMemtable(to_write, false);
+
+  MemTableOrderedT expected{{"4", "a"}, {"5", "b"}};
+  CompareUncompressedOutput(output, expected);
+}
+
+/**
+ * Test that the writer does write deleted keys when
+ * write_deleted == true.
+ */
+TEST(TestUncompressedTableWriter, TestDoesWriteDeleted) {
+  std::vector<char> output;
+  auto io{std::make_unique<WriteOnlyIOMock>(output)};
+  bool sync{false};
+  size_t block_size{16 + 5 * sizeof(size_t)};
+
+  MemTableT to_write{{"1", ""}, {"2", ""}, {"3", ""}, {"4", "a"}, {"5", "b"}};
+
+  UncompressedTableWriter writer{std::move(io), sync, block_size};
+
+  writer.WriteMemtable(to_write, true);
+
+  CompareUncompressedOutput(output,
+                            MemTableOrderedT(to_write.begin(), to_write.end()));
+}
