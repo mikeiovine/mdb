@@ -12,7 +12,7 @@ inline void ThrowIOError() {
   throw std::system_error(5, std::generic_category());
 }
 
-} // namespace
+}  // namespace
 
 class UncompressedTableReader::UncompressedTableIter
     : public TableIteratorImpl {
@@ -156,7 +156,8 @@ std::string UncompressedTableReader::SearchInBlock(
 
 size_t UncompressedTableReader::ReadSize(size_t offset) {
   size_t size;
-  size_t bytes_read{file_->Read(reinterpret_cast<char*>(&size), sizeof(size_t), offset)};
+  size_t bytes_read{
+      file_->Read(reinterpret_cast<char*>(&size), sizeof(size_t), offset)};
   if (bytes_read != sizeof(size_t)) {
     ThrowIOError();
   }

@@ -276,7 +276,8 @@ TEST(TestUncompressedTableReader, TestTableCorruptionHugeValueSize) {
   std::vector<char> buf{ConstructTable(blocks)};
 
   auto index{ConstructIndex(buf)};
-  *reinterpret_cast<size_t*>(buf.data() + 2 * sizeof(size_t) + sizeof("abc")) = 100000000000000;
+  *reinterpret_cast<size_t*>(buf.data() + 2 * sizeof(size_t) + sizeof("abc")) =
+      100000000000000;
   auto io{std::make_unique<ReadOnlyIOMock>(std::move(buf))};
 
   auto reader{UncompressedTableReader(std::move(io), std::move(index))};
