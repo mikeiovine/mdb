@@ -5,6 +5,15 @@
 
 namespace mdb {
 
+namespace {
+
+inline void ThrowIOError() {
+  // 5 == IO error.
+  throw std::system_error(5, std::generic_category());
+}
+
+} // namespace
+
 class UncompressedTableReader::UncompressedTableIter
     : public TableIteratorImpl {
  public:
@@ -109,27 +118,27 @@ std::string UncompressedTableReader::ValueOf(std::string_view key) {
 
 std::string UncompressedTableReader::SearchInBlock(
     size_t block_loc, std::string_view key_to_find) {
-  // TODO This can probably be re-written in terms of the new iterator
   assert(file_ != nullptr);
 
   size_t block_size;
   file_->Read(reinterpret_cast<char*>(&block_size), sizeof(size_t), block_loc);
 
-  size_t pos{sizeof(size_t)};
+  if (block_size > file_->Size() - sizeof(size_t)) {
+    ThrowIOError();
+  }
+
+  size_t pos{0};
+  block_loc += sizeof(size_t);
 
   while (pos < block_size) {
     size_t key_size{ReadSize(block_loc + pos)};
     pos += sizeof(size_t);
-
-    assert(key_size < block_size);
 
     std::string key{ReadString(key_size, block_loc + pos)};
     pos += key_size;
 
     size_t value_size{ReadSize(block_loc + pos)};
     pos += sizeof(size_t);
-
-    assert(value_size < block_size);
 
     if (key == key_to_find) {
       return ReadString(value_size, block_loc + pos);
@@ -138,13 +147,19 @@ std::string UncompressedTableReader::SearchInBlock(
     }
   }
 
-  assert(pos == block_size);
+  if (pos > block_size) {
+    ThrowIOError();
+  }
+
   return "";
 }
 
 size_t UncompressedTableReader::ReadSize(size_t offset) {
   size_t size;
-  file_->Read(reinterpret_cast<char*>(&size), sizeof(size_t), offset);
+  size_t bytes_read{file_->Read(reinterpret_cast<char*>(&size), sizeof(size_t), offset)};
+  if (bytes_read != sizeof(size_t)) {
+    ThrowIOError();
+  }
   return size;
 }
 
@@ -152,7 +167,10 @@ std::string UncompressedTableReader::ReadString(size_t size, size_t offset) {
   std::vector<char> buf;
   buf.reserve(size);
 
-  file_->Read(buf.data(), size, offset);
+  size_t bytes_read{file_->Read(buf.data(), size, offset)};
+  if (bytes_read != size) {
+    ThrowIOError();
+  }
   return std::string{buf.data(), size};
 }
 

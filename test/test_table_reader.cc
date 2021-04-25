@@ -224,4 +224,62 @@ TEST(TestUncompressedTableReader, TestTableIterIncAndDeref) {
   ASSERT_EQ(it, reader.End());
 }
 
-// TODO test that table reader gracefully handles corrupted files
+TEST(TestUncompressedTableReader, TestTableCorruptionHugeBlockSize) {
+  std::vector<std::map<std::string, std::string>> key_values{
+      {{"abc", "def"}, {"a", "helloworld"}}};
+
+  std::vector<BlockT> blocks;
+  for (const auto& kv_map : key_values) {
+    blocks.push_back(ConstructBlock(kv_map));
+  }
+
+  std::vector<char> buf{ConstructTable(blocks)};
+
+  auto index{ConstructIndex(buf)};
+  *reinterpret_cast<size_t*>(buf.data()) = 100000000000000;
+  auto io{std::make_unique<ReadOnlyIOMock>(std::move(buf))};
+
+  auto reader{UncompressedTableReader(std::move(io), std::move(index))};
+
+  ASSERT_THROW(reader.ValueOf("abc"), std::system_error);
+}
+
+TEST(TestUncompressedTableReader, TestTableCorruptionHugeKeySize) {
+  std::vector<std::map<std::string, std::string>> key_values{
+      {{"abc", "def"}, {"a", "helloworld"}}};
+
+  std::vector<BlockT> blocks;
+  for (const auto& kv_map : key_values) {
+    blocks.push_back(ConstructBlock(kv_map));
+  }
+
+  std::vector<char> buf{ConstructTable(blocks)};
+
+  auto index{ConstructIndex(buf)};
+  *reinterpret_cast<size_t*>(buf.data() + sizeof(size_t)) = 10000;
+  auto io{std::make_unique<ReadOnlyIOMock>(std::move(buf))};
+
+  auto reader{UncompressedTableReader(std::move(io), std::move(index))};
+
+  ASSERT_THROW(reader.ValueOf("abc"), std::system_error);
+}
+
+TEST(TestUncompressedTableReader, TestTableCorruptionHugeValueSize) {
+  std::vector<std::map<std::string, std::string>> key_values{
+      {{"abc", "def"}, {"a", "helloworld"}}};
+
+  std::vector<BlockT> blocks;
+  for (const auto& kv_map : key_values) {
+    blocks.push_back(ConstructBlock(kv_map));
+  }
+
+  std::vector<char> buf{ConstructTable(blocks)};
+
+  auto index{ConstructIndex(buf)};
+  *reinterpret_cast<size_t*>(buf.data() + 2 * sizeof(size_t) + sizeof("abc")) = 100000000000000;
+  auto io{std::make_unique<ReadOnlyIOMock>(std::move(buf))};
+
+  auto reader{UncompressedTableReader(std::move(io), std::move(index))};
+
+  ASSERT_THROW(reader.ValueOf("abc"), std::system_error);
+}
