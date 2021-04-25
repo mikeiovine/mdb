@@ -6,13 +6,38 @@ DB::DB(Options opt)
     : options_{std::move(opt)}, logger_{LogWriter(0, options_)} {}
 
 void DB::Put(std::string_view key, std::string_view value) {
+  if (key.empty() || value.empty()) {
+    throw std::invalid_argument("Key and value must be non-empty.");
+  }
+
+  PutOrDelete(key, value);
+}
+
+std::string DB::Get(std::string_view key) {
+  std::shared_lock lk(memtable_mutex_);
+
+  auto value_loc{memtable_.find(key)};
+  if (value_loc != memtable_.end()) {
+    return value_loc->second;
+  }
+
+  lk.unlock();
+
+  return table_.ValueOf(key);
+}
+
+void DB::Delete(std::string_view key) {
+  if (key.empty()) {
+    throw std::invalid_argument("Key must be non-empty.");
+  }
+
+  PutOrDelete(key, "");
+}
+
+void DB::PutOrDelete(std::string_view key, std::string_view value) {
   std::unique_lock<std::mutex> lk(write_mutex_);
 
-  if (value.size() > 0) {
-    logger_.Add(key, value);
-  } else {
-    logger_.MarkDelete(key);
-  }
+  logger_.Add(key, value);
 
   std::unique_lock memtable_lk(memtable_mutex_);
   UpdateMemtable(key, value);
@@ -27,33 +52,9 @@ void DB::Put(std::string_view key, std::string_view value) {
   }
 }
 
-std::string DB::Get(std::string_view key) {
-  std::shared_lock lk(memtable_mutex_);
-
-  auto value_loc{memtable_.find(key)};
-  if (value_loc != memtable_.end()) {
-    return value_loc->second;
-  }
-
-  memtable_mutex_.unlock();
-
-  return table_.ValueOf(key);
-}
-
 void DB::UpdateMemtable(std::string_view key, std::string_view value) {
-  // Copy the data in the views
-  std::string value_str{value};
-  std::string key_str{key};
-
-  if (value_str.size() > 0) {
-    memtable_[key_str] = value_str;
-    cache_size_ += key_str.size() + value_str.size();
-  } else {
-    auto pos{memtable_.find(key_str)};
-    if (pos != memtable_.end()) {
-      memtable_.erase(pos);
-    }
-  }
+  memtable_.insert_or_assign(std::string(key), value);
+  cache_size_ += key.size() + value.size();
 }
 
 void DB::ClearMemtable() {

@@ -4,7 +4,8 @@ namespace mdb {
 
 IndexT UncompressedTableWriter::GetIndex() { return index_; }
 
-void UncompressedTableWriter::WriteMemtable(const MemTableT& memtable) {
+void UncompressedTableWriter::WriteMemtable(const MemTableT& memtable,
+                                            bool write_deleted) {
   size_t block_marked{false};
 
   for (auto it = memtable.cbegin(); it != memtable.cend(); it++) {
@@ -13,12 +14,15 @@ void UncompressedTableWriter::WriteMemtable(const MemTableT& memtable) {
       block_marked = true;
     }
 
-    Add(it->first, it->second);
+    // Empty values correspond to deleted keys.
+    if (!write_deleted || !it->second.empty()) {
+      Add(it->first, it->second);
 
-    if (buf_.size() >= block_size_) {
-      block_marked = false;
-      cur_index_ += buf_.size();
-      Flush();
+      if (buf_.size() >= block_size_) {
+        block_marked = false;
+        cur_index_ += buf_.size();
+        Flush();
+      }
     }
   }
 

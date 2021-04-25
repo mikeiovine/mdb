@@ -32,11 +32,12 @@ void Table::WriteMemtableInternal(int level, const Options& options,
                                   const MemTableT& memtable, bool async) {
   std::unique_lock lk(level_mutex_);
 
-  levels_[level].push_front(
-      options.table_factory->MakeTable(next_table_, options, memtable));
+  bool write_deleted{level == 0};
+  levels_[level].push_front(options.table_factory->MakeTable(
+      next_table_, options, memtable, write_deleted));
 
-  lk.unlock();
   ++next_table_;
+  lk.unlock();
 
   if (NeedsCompaction(level)) {
     if (async) {
@@ -108,6 +109,8 @@ void Table::Compact(int level, const Options& options) {
   };
 
   while (!is_done(iterators)) {
+    // Note: the insertion fails if the key is already in the memtable.
+    // This is what we want! (the most recent key gets priority)
     memtable_temp.insert(determine_kv(iterators));
   }
 

@@ -23,7 +23,6 @@ class LogWriter {
   ~LogWriter();
 
   void Add(std::string_view key, std::string_view value);
-  void MarkDelete(std::string_view key);
 
   void FlushBuffer();
 

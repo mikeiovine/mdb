@@ -24,14 +24,16 @@ class TableFactory {
 
   virtual std::unique_ptr<TableReader> MakeTable(int table_number,
                                                  const Options& options,
-                                                 const MemTableT& memtable) = 0;
+                                                 const MemTableT& memtable,
+                                                 bool write_deleted) = 0;
 };
 
 class UncompressedTableFactory : public TableFactory {
  public:
   std::unique_ptr<TableReader> MakeTable(int table_number,
                                          const Options& options,
-                                         const MemTableT& memtable) override;
+                                         const MemTableT& memtable,
+                                         bool write_deleted) override;
 };
 
 }  // namespace mdb

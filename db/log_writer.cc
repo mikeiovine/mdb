@@ -29,8 +29,6 @@ LogWriter::~LogWriter() {
 }
 
 void LogWriter::Add(std::string_view key, std::string_view value) {
-  assert(key.size() > 0 && value.size() > 0);
-
   // For the purposes of exception safety, we write everything together.
   // If we wrote key/value sequentially, and an exception occured during
   // the key write, we would leave the log file in a unreadable state!
@@ -39,23 +37,6 @@ void LogWriter::Add(std::string_view key, std::string_view value) {
 
   util::AddStringToWritable(key, writable_data);
   util::AddStringToWritable(value, writable_data);
-
-  Append(writable_data);
-}
-
-void LogWriter::MarkDelete(std::string_view key) {
-  assert(key.size() > 0);
-
-  std::vector<char> writable_data;
-  writable_data.reserve(key.size() + 2 * sizeof(size_t));
-
-  util::AddStringToWritable(key, writable_data);
-
-  const size_t zero{0};
-  const char* zero_size_bytes{reinterpret_cast<const char*>(&zero)};
-
-  writable_data.insert(writable_data.end(), zero_size_bytes,
-                       zero_size_bytes + sizeof(size_t));
 
   Append(writable_data);
 }

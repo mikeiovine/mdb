@@ -23,7 +23,8 @@ class TableWriter {
 
   virtual ~TableWriter() = default;
 
-  virtual void WriteMemtable(const MemTableT& memtable) = 0;
+  virtual void WriteMemtable(const MemTableT& memtable,
+                             bool write_deleted = false) = 0;
 
   virtual IndexT GetIndex() = 0;
 };
@@ -36,7 +37,8 @@ class UncompressedTableWriter : public TableWriter {
     assert(file_ != nullptr);
   }
 
-  void WriteMemtable(const MemTableT& memtable) override;
+  void WriteMemtable(const MemTableT& memtable,
+                     bool write_deleted = false) override;
 
   IndexT GetIndex() override;
 

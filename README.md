@@ -30,4 +30,7 @@ db.Put("some key", "some value");
 
 // Get a key
 db.Get("some key");
+
+// Delete a key (it is not an error if the key doesn't exist)
+db.Delete("some key");
 ```

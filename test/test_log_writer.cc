@@ -81,11 +81,7 @@ TEST(TestLogWriter, TestLogfileFormatWithDeletes) {
       {"abc", "someveryveryverylongvalueabcdefgjhi123456789"}};
 
   for (const auto& kv : pairs) {
-    if (kv.second.size()) {
-      log.Add(kv.first, kv.second);
-    } else {
-      log.MarkDelete(kv.first);
-    }
+    log.Add(kv.first, kv.second);
   }
 
   log.FlushBuffer();
@@ -134,11 +130,7 @@ TEST(TestLogWriter, TestLogfileAutoSync) {
 
   int i{1};
   for (const auto& kv : pairs) {
-    if (kv.second.size()) {
-      log.Add(kv.first, kv.second);
-    } else {
-      log.MarkDelete(kv.first);
-    }
+    log.Add(kv.first, kv.second);
     ASSERT_EQ(num_syncs, i);
     i += 1;
   }

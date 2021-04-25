@@ -6,12 +6,13 @@
 namespace mdb {
 
 std::unique_ptr<TableReader> UncompressedTableFactory::MakeTable(
-    int table_number, const Options& options, const MemTableT& memtable) {
+    int table_number, const Options& options, const MemTableT& memtable,
+    bool write_deleted) {
   UncompressedTableWriter writer{
       options.env->MakeWriteOnlyIO(util::TableFileName(options, table_number)),
       options.write_sync, options.block_size};
 
-  writer.WriteMemtable(memtable);
+  writer.WriteMemtable(memtable, write_deleted);
 
   return std::make_unique<UncompressedTableReader>(
       options.env->MakeReadOnlyIO(util::TableFileName(options, table_number)),

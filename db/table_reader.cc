@@ -138,6 +138,11 @@ std::string UncompressedTableReader::SearchInBlock(
     pos += key_size;
 
     size_t value_size{ReadSize(block_loc + pos)};
+
+    if (value_size == 0) {
+      ThrowIOError();
+    }
+
     pos += sizeof(size_t);
 
     if (key == key_to_find) {
