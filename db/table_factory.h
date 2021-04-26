@@ -23,12 +23,20 @@ class TableFactory {
 
   virtual ~TableFactory() = default;
 
+  // A convenience function that writes an entire memtable
+  // and returns a reader to the new file.
   virtual std::unique_ptr<TableReader> TableFromMemtable(
       int table_number, const Options& options, const MemTableT& memtable,
       bool write_deleted) = 0;
 
-  virtual std::unique_ptr<TableWriter> MakeEmptyTableWriter(
+  // Makes an empty table.
+  virtual std::unique_ptr<TableWriter> MakeTableWriter(
       int table_number, const Options& options) = 0;
+
+  // Readers must be constructed from a writer. This is because the writer
+  // will construct the block index that the reader will eventually need.
+  virtual std::unique_ptr<TableReader> MakeTableReader(
+      const TableWriter& writer, const Options& options) = 0;
 };
 
 class UncompressedTableFactory : public TableFactory {
@@ -38,8 +46,11 @@ class UncompressedTableFactory : public TableFactory {
                                                  const MemTableT& memtable,
                                                  bool write_deleted) override;
 
-  std::unique_ptr<TableWriter> MakeEmptyTableWriter(
-      int table_number, const Options& options) override;
+  std::unique_ptr<TableWriter> MakeTableWriter(int table_number,
+                                               const Options& options) override;
+
+  std::unique_ptr<TableReader> MakeTableReader(const TableWriter& writer,
+                                               const Options& options) override;
 };
 
 }  // namespace mdb

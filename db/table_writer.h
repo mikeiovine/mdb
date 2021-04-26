@@ -26,7 +26,9 @@ class TableWriter {
   virtual void WriteMemtable(const MemTableT& memtable,
                              bool write_deleted = false) = 0;
 
-  virtual IndexT GetIndex() = 0;
+  virtual IndexT GetIndex() const = 0;
+
+  virtual std::string GetFileName() const = 0;
 };
 
 class UncompressedTableWriter : public TableWriter {
@@ -40,7 +42,9 @@ class UncompressedTableWriter : public TableWriter {
   void WriteMemtable(const MemTableT& memtable,
                      bool write_deleted = false) override;
 
-  IndexT GetIndex() override;
+  IndexT GetIndex() const override;
+
+  std::string GetFileName() const override;
 
  private:
   std::vector<char> buf_;

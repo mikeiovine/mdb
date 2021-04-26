@@ -2,7 +2,7 @@
 
 namespace mdb {
 
-IndexT UncompressedTableWriter::GetIndex() { return index_; }
+IndexT UncompressedTableWriter::GetIndex() const { return index_; }
 
 void UncompressedTableWriter::WriteMemtable(const MemTableT& memtable,
                                             bool write_deleted) {
@@ -56,6 +56,10 @@ void UncompressedTableWriter::Flush() {
   }
 
   buf_.clear();
+}
+
+std::string UncompressedTableWriter::GetFileName() const {
+  return file_->GetFileName();
 }
 
 }  // namespace mdb

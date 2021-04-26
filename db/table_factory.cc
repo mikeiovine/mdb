@@ -16,15 +16,20 @@ std::unique_ptr<TableReader> UncompressedTableFactory::TableFromMemtable(
   writer.WriteMemtable(memtable, write_deleted);
 
   return std::make_unique<UncompressedTableReader>(
-      options.env->MakeReadOnlyIO(util::TableFileName(options, table_number)),
-      writer.GetIndex());
+      options.env->MakeReadOnlyIO(writer.GetFileName()), writer.GetIndex());
 }
 
-std::unique_ptr<TableWriter> UncompressedTableFactory::MakeEmptyTableWriter(
+std::unique_ptr<TableWriter> UncompressedTableFactory::MakeTableWriter(
     int table_number, const Options& options) {
   return std::make_unique<UncompressedTableWriter>(
       options.env->MakeWriteOnlyIO(util::TableFileName(options, table_number)),
       options.write_sync, options.block_size);
+}
+
+std::unique_ptr<TableReader> UncompressedTableFactory::MakeTableReader(
+    const TableWriter& writer, const Options& options) {
+  return std::make_unique<UncompressedTableReader>(
+      options.env->MakeReadOnlyIO(writer.GetFileName()), writer.GetIndex());
 }
 
 }  // namespace mdb
