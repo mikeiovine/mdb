@@ -3,12 +3,13 @@
 #include <memory>
 
 #include "env.h"
-#include "table_reader.h"
 #include "types.h"
 
 namespace mdb {
 
 struct Options;
+class TableReader;
+class TableWriter;
 
 class TableFactory {
  public:
@@ -22,18 +23,23 @@ class TableFactory {
 
   virtual ~TableFactory() = default;
 
-  virtual std::unique_ptr<TableReader> MakeTable(int table_number,
-                                                 const Options& options,
-                                                 const MemTableT& memtable,
-                                                 bool write_deleted) = 0;
+  virtual std::unique_ptr<TableReader> TableFromMemtable(
+      int table_number, const Options& options, const MemTableT& memtable,
+      bool write_deleted) = 0;
+
+  virtual std::unique_ptr<TableWriter> MakeEmptyTableWriter(
+      int table_number, const Options& options) = 0;
 };
 
 class UncompressedTableFactory : public TableFactory {
  public:
-  std::unique_ptr<TableReader> MakeTable(int table_number,
-                                         const Options& options,
-                                         const MemTableT& memtable,
-                                         bool write_deleted) override;
+  std::unique_ptr<TableReader> TableFromMemtable(int table_number,
+                                                 const Options& options,
+                                                 const MemTableT& memtable,
+                                                 bool write_deleted) override;
+
+  std::unique_ptr<TableWriter> MakeEmptyTableWriter(
+      int table_number, const Options& options) override;
 };
 
 }  // namespace mdb

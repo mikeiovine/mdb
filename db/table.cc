@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "iterator.h"
+#include "table_reader.h"
 
 namespace mdb {
 
@@ -35,7 +36,7 @@ void Table::WriteMemtableInternal(int level, const Options& options,
   std::unique_lock lk(level_mutex_);
 
   bool write_deleted{level == 0};
-  levels_[level].push_front(options.table_factory->MakeTable(
+  levels_[level].push_front(options.table_factory->TableFromMemtable(
       next_table_, options, memtable, write_deleted));
 
   ++next_table_;

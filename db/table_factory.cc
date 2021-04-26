@@ -1,11 +1,12 @@
 #include "table_factory.h"
 
 #include "options.h"
+#include "table_reader.h"
 #include "table_writer.h"
 
 namespace mdb {
 
-std::unique_ptr<TableReader> UncompressedTableFactory::MakeTable(
+std::unique_ptr<TableReader> UncompressedTableFactory::TableFromMemtable(
     int table_number, const Options& options, const MemTableT& memtable,
     bool write_deleted) {
   UncompressedTableWriter writer{
@@ -17,6 +18,13 @@ std::unique_ptr<TableReader> UncompressedTableFactory::MakeTable(
   return std::make_unique<UncompressedTableReader>(
       options.env->MakeReadOnlyIO(util::TableFileName(options, table_number)),
       writer.GetIndex());
+}
+
+std::unique_ptr<TableWriter> UncompressedTableFactory::MakeEmptyTableWriter(
+    int table_number, const Options& options) {
+  return std::make_unique<UncompressedTableWriter>(
+      options.env->MakeWriteOnlyIO(util::TableFileName(options, table_number)),
+      options.write_sync, options.block_size);
 }
 
 }  // namespace mdb

@@ -7,11 +7,10 @@
 #include <string>
 
 #include "options.h"
+#include "table_reader.h"
 #include "types.h"
 
 namespace mdb {
-
-class TableReader;
 
 class Table {
  public:
