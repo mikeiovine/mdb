@@ -17,7 +17,7 @@ struct KeyValue {
   KeyValue(std::pair<std::string, std::string> kv_, size_t iterator_id_)
       : kv{std::move(kv_)}, iterator_id{iterator_id_} {}
 
-  friend bool operator<(const KeyValue& lhs, const KeyValue& rhs) {
+  friend bool operator>(const KeyValue& lhs, const KeyValue& rhs) {
     return lhs.kv.first > rhs.kv.first;
   }
 
@@ -25,7 +25,9 @@ struct KeyValue {
   size_t iterator_id;
 };
 
-using PriorityQueue = std::priority_queue<KeyValue>;
+using PriorityQueue = std::priority_queue<KeyValue, std::vector<KeyValue>,
+                                          // Use a min-heap
+                                          std::greater<KeyValue>>;
 
 }  // namespace
 
