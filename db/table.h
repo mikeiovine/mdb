@@ -33,6 +33,7 @@ class Table {
  private:
   bool NeedsCompaction(int level);
   void Compact(int level, const Options& options);
+  void TriggerCompaction(int level, const Options& options);
   size_t TotalSize(int level);
 
   int next_table_{0};
@@ -42,6 +43,8 @@ class Table {
   std::future<void> compaction_future_;
 
   mutable std::shared_mutex level_mutex_;
+
+  bool ongoing_compaction_{false};
 };
 
 }  // namespace mdb

@@ -27,6 +27,11 @@ struct Options {
   // Make table readers/writers for the DB.
   std::shared_ptr<TableFactory> table_factory{
       std::make_shared<UncompressedTableFactory>()};
+
+  // Maximum number of tables in Level 0. When this
+  // maximum is hit, writes will be stopped until
+  // compaction finishes.
+  size_t max_num_level_0_files{12};
 };
 
 }  // namespace mdb

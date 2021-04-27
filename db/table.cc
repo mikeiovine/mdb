@@ -49,11 +49,9 @@ std::string Table::ValueOf(std::string_view key) const {
 }
 
 void Table::WriteMemtable(const Options& options, const MemTableT& memtable) {
-  // TODO: Right now, we are making a simplification. Only one compaction can
-  // be going on at any given moment. But in principle, multiple compactions
-  // could happen concurrently. It's going to be a bit more complicated to
-  // implement, so this will be fixed later :)
-  WaitForOnGoingCompactions();
+  if (levels_[0].size() >= options.max_num_level_0_files) {
+    WaitForOnGoingCompactions();
+  }
 
   std::unique_lock lk(level_mutex_);
 
@@ -65,8 +63,10 @@ void Table::WriteMemtable(const Options& options, const MemTableT& memtable) {
 
   lk.unlock();
 
-  if (NeedsCompaction(0)) {
-    compaction_future_ = std::async(&Table::Compact, this, 0, options);
+  if (!ongoing_compaction_ && NeedsCompaction(0)) {
+    ongoing_compaction_ = true;
+    compaction_future_ =
+        std::async(&Table::TriggerCompaction, this, 0, options);
   }
 }
 
@@ -93,6 +93,11 @@ size_t Table::TotalSize(int level) {
   }
 
   return total;
+}
+
+void Table::TriggerCompaction(int level, const Options& options) {
+  Compact(level, options);
+  ongoing_compaction_ = false;
 }
 
 void Table::Compact(int level, const Options& options) {
