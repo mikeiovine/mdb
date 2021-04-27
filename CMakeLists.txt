@@ -53,6 +53,7 @@ add_executable(
     test/test_log_reader.cc
     test/test_table_writer.cc
     test/test_table_reader.cc
+    test/test_helpers.cc
 )
 
 target_link_libraries(
