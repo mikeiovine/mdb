@@ -6,23 +6,10 @@ IndexT UncompressedTableWriter::GetIndex() const { return index_; }
 
 void UncompressedTableWriter::WriteMemtable(const MemTableT& memtable,
                                             bool write_deleted) {
-  size_t block_marked{false};
-
   for (auto it = memtable.cbegin(); it != memtable.cend(); it++) {
-    if (!block_marked) {
-      index_.emplace(it->first, cur_index_);
-      block_marked = true;
-    }
-
     // Empty values correspond to deleted keys.
     if (write_deleted || !it->second.empty()) {
       Add(it->first, it->second);
-
-      if (buf_.size() >= block_size_) {
-        block_marked = false;
-        cur_index_ += buf_.size();
-        Flush();
-      }
     }
   }
 
@@ -34,6 +21,7 @@ void UncompressedTableWriter::WriteMemtable(const MemTableT& memtable,
 void UncompressedTableWriter::Add(std::string_view key,
                                   std::string_view value) {
   assert(key.size() > 0);
+  num_keys_++;
 
   // Placeholder bytes; we'll put the real size when we flush
   if (buf_.empty()) {
@@ -41,8 +29,19 @@ void UncompressedTableWriter::Add(std::string_view key,
     buf_.insert(buf_.end(), &size, &size + sizeof(size_t));
   }
 
+  if (!block_marked_) {
+    index_.emplace(key, cur_index_);
+    block_marked_ = true;
+  }
+
   util::AddStringToWritable(key, buf_);
   util::AddStringToWritable(value, buf_);
+
+  if (buf_.size() >= block_size_) {
+    block_marked_ = false;
+    cur_index_ += buf_.size();
+    Flush();
+  }
 }
 
 void UncompressedTableWriter::Flush() {
@@ -61,5 +60,7 @@ void UncompressedTableWriter::Flush() {
 std::string UncompressedTableWriter::GetFileName() const {
   return file_->GetFileName();
 }
+
+size_t UncompressedTableWriter::NumKeys() const noexcept { return num_keys_; }
 
 }  // namespace mdb

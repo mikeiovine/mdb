@@ -16,11 +16,21 @@ class DB {
  public:
   DB(Options options);
 
+  DB(const DB&) = delete;
+  DB& operator=(const DB&) = delete;
+
+  DB(DB&&) = delete;
+  DB& operator=(DB&&) = delete;
+
+  ~DB();
+
   void Put(std::string_view key, std::string_view value);
 
   std::string Get(std::string_view key);
 
   void Delete(std::string_view key);
+
+  void WaitForOnGoingCompactions();
 
  private:
   void PutOrDelete(std::string_view key, std::string_view value);

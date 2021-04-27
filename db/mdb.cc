@@ -29,6 +29,9 @@ int main(int argc, char *argv[]) {
     }
   }
 
+  db.WaitForOnGoingCompactions();
+  std::cout << "finished, running assertions" << std::endl;
+
   for (long i = 0; i < 1000000; i++) {
     assert(db.Get("hello" + std::to_string(i)) == "");
   }

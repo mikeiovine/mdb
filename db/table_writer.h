@@ -29,6 +29,12 @@ class TableWriter {
   virtual IndexT GetIndex() const = 0;
 
   virtual std::string GetFileName() const = 0;
+
+  virtual void Add(std::string_view key, std::string_view value) = 0;
+
+  virtual void Flush() = 0;
+
+  virtual size_t NumKeys() const noexcept = 0;
 };
 
 class UncompressedTableWriter : public TableWriter {
@@ -46,11 +52,14 @@ class UncompressedTableWriter : public TableWriter {
 
   std::string GetFileName() const override;
 
+  void Add(std::string_view key, std::string_view value) override;
+
+  void Flush() override;
+
+  size_t NumKeys() const noexcept override;
+
  private:
   std::vector<char> buf_;
-
-  void Add(std::string_view key, std::string_view value);
-  void Flush();
 
   std::unique_ptr<WriteOnlyIO> file_;
   IndexT index_;
@@ -59,6 +68,8 @@ class UncompressedTableWriter : public TableWriter {
   const size_t block_size_;
 
   size_t cur_index_{0};
+  size_t num_keys_{0};
+  bool block_marked_{false};
 };
 
 }  // namespace mdb

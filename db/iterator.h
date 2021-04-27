@@ -63,7 +63,7 @@ class TableIterator {
 
   ~TableIterator() = default;
 
-  reference operator*() { return impl_->GetValue(); }
+  reference operator*() const { return impl_->GetValue(); }
 
   TableIterator& operator++() {
     impl_->Next();
@@ -84,7 +84,7 @@ class TableIterator {
     return !(lhs == rhs);
   }
 
-  pointer operator->() { return &impl_->GetValue(); }
+  pointer operator->() const { return &impl_->GetValue(); }
 
  private:
   std::shared_ptr<TableIteratorImpl> impl_;
