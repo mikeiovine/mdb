@@ -23,8 +23,7 @@ class TableWriter {
 
   virtual ~TableWriter() = default;
 
-  virtual void WriteMemtable(const MemTableT& memtable,
-                             bool write_deleted = false) = 0;
+  virtual void WriteMemtable(const MemTableT& memtable) = 0;
 
   virtual IndexT GetIndex() const = 0;
 
@@ -32,6 +31,8 @@ class TableWriter {
 
   virtual void Add(std::string_view key, std::string_view value) = 0;
 
+  // Note: if you're adding keys manually via Add(), you'll want to call
+  // Flush() when you're done to write the last block to disk.
   virtual void Flush() = 0;
 
   virtual size_t NumKeys() const noexcept = 0;
@@ -45,8 +46,7 @@ class UncompressedTableWriter : public TableWriter {
     assert(file_ != nullptr);
   }
 
-  void WriteMemtable(const MemTableT& memtable,
-                     bool write_deleted = false) override;
+  void WriteMemtable(const MemTableT& memtable) override;
 
   IndexT GetIndex() const override;
 

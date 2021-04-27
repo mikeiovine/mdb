@@ -48,6 +48,8 @@ class WriteOnlyIOMock : public mdb::WriteOnlyIO {
     on_sync_.push_back(std::move(func));
   }
 
+  std::string GetFileName() const noexcept override { return "mock_file"; }
+
  private:
   bool closed_{false};
   std::vector<char>& record_;
@@ -71,6 +73,8 @@ class ReadOnlyIOMock : public mdb::ReadOnlyIO {
 
     return 0;
   }
+
+  std::string GetFileName() const noexcept override { return "mock_file"; }
 
   void Close() override { closed_ = true; }
 

@@ -170,41 +170,49 @@ TEST(TestUncompressedTableWriter, TestIndex) {
 }
 
 /**
- * Test that the writer does not write deleted keys when
- * write_deleted == false.
+ * Test that the NumKeys() method returns the correct number of keys added to
+ * the writer.
  */
-TEST(TestUncompressedTableWriter, TestDoesNotWriteDeleted) {
-  std::vector<char> output;
-  auto io{std::make_unique<WriteOnlyIOMock>(output)};
+TEST(TestUncompressedTableWriter, TestNumKeys) {
   bool sync{false};
   size_t block_size{16 + 5 * sizeof(size_t)};
 
-  MemTableT to_write{{"1", ""}, {"2", ""}, {"3", ""}, {"4", "a"}, {"5", "b"}};
+  // Write an entire memtable
+  MemTableT to_write{{"1", "v1"}, {"2", "v2"}, {"3", "v3"}};
+  std::vector<char> output1;
+  auto io1{std::make_unique<WriteOnlyIOMock>(output1)};
 
-  UncompressedTableWriter writer{std::move(io), sync, block_size};
+  UncompressedTableWriter writer1{std::move(io1), sync, block_size};
+  writer1.WriteMemtable(to_write);
 
-  writer.WriteMemtable(to_write, false);
+  // Write individual key/value pairs
+  std::vector<char> output2;
+  auto io2{std::make_unique<WriteOnlyIOMock>(output2)};
+  UncompressedTableWriter writer2{std::move(io2), sync, block_size};
 
-  MemTableOrderedT expected{{"4", "a"}, {"5", "b"}};
-  CompareUncompressedOutput(output, expected);
+  writer2.Add("1", "");
+  writer2.Add("2", "");
+
+  ASSERT_EQ(writer1.NumKeys(), 3);
+  ASSERT_EQ(writer2.NumKeys(), 2);
 }
 
 /**
- * Test that the writer does write deleted keys when
- * write_deleted == true.
+ * Test that the Flush() method really flushes the in-memory buffer and makes
+ * a new block when manually adding keys.
  */
-TEST(TestUncompressedTableWriter, TestDoesWriteDeleted) {
-  std::vector<char> output;
-  auto io{std::make_unique<WriteOnlyIOMock>(output)};
+TEST(TestUncompressedTableWriter, TestFlush) {
   bool sync{false};
   size_t block_size{16 + 5 * sizeof(size_t)};
 
-  MemTableT to_write{{"1", ""}, {"2", ""}, {"3", ""}, {"4", "a"}, {"5", "b"}};
-
+  // Write individual key/value pairs
+  std::vector<char> output;
+  auto io{std::make_unique<WriteOnlyIOMock>(output)};
   UncompressedTableWriter writer{std::move(io), sync, block_size};
 
-  writer.WriteMemtable(to_write, true);
+  writer.Add("1", "");
+  writer.Flush();
+  writer.Add("2", "");
 
-  CompareUncompressedOutput(output,
-                            MemTableOrderedT(to_write.begin(), to_write.end()));
+  ASSERT_EQ(writer.GetIndex().size(), 2);
 }
