@@ -26,8 +26,7 @@ class TableFactory {
   // A convenience function that writes an entire memtable
   // and returns a reader to the new file.
   virtual std::unique_ptr<TableReader> TableFromMemtable(
-      int table_number, const Options& options, const MemTableT& memtable,
-      bool write_deleted) = 0;
+      int table_number, const Options& options, const MemTableT& memtable) = 0;
 
   // Makes an empty table.
   virtual std::unique_ptr<TableWriter> MakeTableWriter(
@@ -41,10 +40,9 @@ class TableFactory {
 
 class UncompressedTableFactory : public TableFactory {
  public:
-  std::unique_ptr<TableReader> TableFromMemtable(int table_number,
-                                                 const Options& options,
-                                                 const MemTableT& memtable,
-                                                 bool write_deleted) override;
+  std::unique_ptr<TableReader> TableFromMemtable(
+      int table_number, const Options& options,
+      const MemTableT& memtable) override;
 
   std::unique_ptr<TableWriter> MakeTableWriter(int table_number,
                                                const Options& options) override;

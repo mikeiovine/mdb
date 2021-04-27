@@ -49,23 +49,24 @@ std::string Table::ValueOf(std::string_view key) const {
 }
 
 void Table::WriteMemtable(const Options& options, const MemTableT& memtable) {
+  // TODO: Right now, we are making a simplification. Only one compaction can
+  // be going on at any given moment. But in principle, multiple compactions
+  // could happen concurrently. It's going to be a bit more complicated to
+  // implement, so this will be fixed later :)
   WaitForOnGoingCompactions();
-  WriteMemtableInternal(0, options, memtable);
-}
 
-void Table::WriteMemtableInternal(int level, const Options& options,
-                                  const MemTableT& memtable) {
   std::unique_lock lk(level_mutex_);
 
-  bool write_deleted{level == 0};
-  levels_[level].push_front(options.table_factory->TableFromMemtable(
-      next_table_, options, memtable, write_deleted));
+  // New tables always go to level 0
+  levels_[0].push_front(
+      options.table_factory->TableFromMemtable(next_table_, options, memtable));
 
   ++next_table_;
+
   lk.unlock();
 
-  if (NeedsCompaction(level)) {
-    compaction_future_ = std::async(&Table::Compact, this, level, options);
+  if (NeedsCompaction(0)) {
+    compaction_future_ = std::async(&Table::Compact, this, 0, options);
   }
 }
 
@@ -78,7 +79,7 @@ void Table::WaitForOnGoingCompactions() {
 
 bool Table::NeedsCompaction(int level) {
   if (level == 0) {
-    return levels_[level].size() > 4;
+    return levels_[level].size() > 3;
   }
 
   return TotalSize(level) > std::pow(10, level + 1) * 1000 * 1000;
@@ -111,10 +112,8 @@ void Table::Compact(int level, const Options& options) {
     }
   }
 
-  std::unique_lock lk(level_mutex_);
   auto output_io{options.table_factory->MakeTableWriter(next_table_, options)};
   ++next_table_;
-  lk.unlock();
 
   std::string last_key{""};
 
@@ -139,21 +138,23 @@ void Table::Compact(int level, const Options& options) {
     }
   }
 
-  lk.lock();
-
   if (output_io->NumKeys() > 0) {
     output_io->Flush();
+
+    std::unique_lock lk(level_mutex_);
     levels_[level + 1].push_front(
         options.table_factory->MakeTableReader(*output_io, options));
+
     if (NeedsCompaction(level + 1)) {
       lk.unlock();
       Compact(level + 1, options);
-      lk.lock();
     }
 
   } else {
     options.env->RemoveFile(output_io->GetFileName());
   }
+
+  std::unique_lock lk(level_mutex_);
 
   for (const auto& reader : level_list) {
     options.env->RemoveFile(reader->GetFileName());

@@ -35,9 +35,6 @@ class Table {
   void Compact(int level, const Options& options);
   size_t TotalSize(int level);
 
-  void WriteMemtableInternal(int level, const Options& options,
-                             const MemTableT& memtable);
-
   int next_table_{0};
 
   std::map<int, LevelT> levels_;
