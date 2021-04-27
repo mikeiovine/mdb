@@ -11,7 +11,7 @@ namespace mdb {
 
 class LogWriter {
  public:
-  explicit LogWriter(int log_number, const Options& options);
+  LogWriter(int log_number, const Options& options);
   LogWriter(std::unique_ptr<WriteOnlyIO> file, bool sync);
 
   LogWriter(const LogWriter&) = delete;
