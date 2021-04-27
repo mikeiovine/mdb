@@ -111,12 +111,12 @@ void Table::Compact(int level, const Options& options) {
     }
   }
 
-  std::string last_key{""};
-
   std::unique_lock lk(level_mutex_);
   auto output_io{options.table_factory->MakeTableWriter(next_table_, options)};
   ++next_table_;
   lk.unlock();
+
+  std::string last_key{""};
 
   while (!pq.empty()) {
     auto best{pq.top()};
@@ -133,10 +133,10 @@ void Table::Compact(int level, const Options& options) {
     std::pair<TableIterator, TableIterator>& it{iterators[best.iterator_id]};
     ++it.first;
 
+    pq.pop();
     if (it.first != it.second) {
       pq.emplace(*it.first, best.iterator_id);
     }
-    pq.pop();
   }
 
   lk.lock();
