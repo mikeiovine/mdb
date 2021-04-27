@@ -29,6 +29,10 @@ class TableWriter {
 
   virtual std::string GetFileName() const = 0;
 
+  // It is the responsibility of the caller to make sure
+  // keys are added in SORTED order! The reader is depending
+  // on this invariant. This function will throw std::invalid_argument
+  // if this condition is violated
   virtual void Add(std::string_view key, std::string_view value) = 0;
 
   // Note: if you're adding keys manually via Add(), you'll want to call
@@ -70,6 +74,8 @@ class UncompressedTableWriter : public TableWriter {
   size_t cur_index_{0};
   size_t num_keys_{0};
   bool block_marked_{false};
+
+  std::string last_key = "";
 };
 
 }  // namespace mdb

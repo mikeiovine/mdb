@@ -216,3 +216,19 @@ TEST(TestUncompressedTableWriter, TestFlush) {
 
   ASSERT_EQ(writer.GetIndex().size(), 2);
 }
+
+/**
+ * Test that an exception is thrown if you try to add keys in
+ * non-sorted order.
+ */
+TEST(TestUncompressedTableWriter, TestAddingUnsortedThrows) {
+  bool sync{false};
+  size_t block_size{16 + 5 * sizeof(size_t)};
+
+  std::vector<char> output;
+  auto io{std::make_unique<WriteOnlyIOMock>(output)};
+  UncompressedTableWriter writer{std::move(io), sync, block_size};
+
+  writer.Add("2", "");
+  ASSERT_THROW(writer.Add("1", ""), std::invalid_argument);
+}

@@ -1,5 +1,7 @@
 #include "table_writer.h"
 
+#include <iostream>
+
 namespace mdb {
 
 IndexT UncompressedTableWriter::GetIndex() const { return index_; }
@@ -9,14 +11,19 @@ void UncompressedTableWriter::WriteMemtable(const MemTableT& memtable) {
     Add(it->first, it->second);
   }
 
-  if (buf_.size() > 0) {
-    Flush();
-  }
+  // Flush out anything left over in the buffer.
+  Flush();
 }
 
 void UncompressedTableWriter::Add(std::string_view key,
                                   std::string_view value) {
   assert(key.size() > 0);
+
+  if (last_key > key) {
+    throw std::invalid_argument("Keys must be inserted in sorted order");
+  }
+
+  last_key = key;
   num_keys_++;
 
   // Placeholder bytes; we'll put the real size when we flush
@@ -40,22 +47,25 @@ void UncompressedTableWriter::Add(std::string_view key,
 
 void UncompressedTableWriter::Flush() {
   assert(file_ != nullptr);
-  assert(buf_.size() >= sizeof(size_t));
 
-  // Prepare for the next block
-  block_marked_ = false;
-  cur_index_ += buf_.size();
+  if (!buf_.empty()) {
+    assert(buf_.size() >= sizeof(size_t));
 
-  // Write the size of this block to the first spot in buf_
-  *reinterpret_cast<size_t*>(buf_.data()) = buf_.size() - sizeof(size_t);
+    // Prepare for the next block
+    block_marked_ = false;
+    cur_index_ += buf_.size();
 
-  // Flush everything to disk
-  file_->Write(buf_.data(), buf_.size());
-  if (sync_) {
-    file_->Sync();
+    // Write the size of this block to the first spot in buf_
+    *reinterpret_cast<size_t*>(buf_.data()) = buf_.size() - sizeof(size_t);
+
+    // Flush everything to disk
+    file_->Write(buf_.data(), buf_.size());
+    if (sync_) {
+      file_->Sync();
+    }
+
+    buf_.clear();
   }
-
-  buf_.clear();
 }
 
 std::string UncompressedTableWriter::GetFileName() const {

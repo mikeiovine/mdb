@@ -55,6 +55,7 @@ add_executable(
     test/test_table_reader.cc
     test/test_helpers.cc
     test/test_log_integration.cc
+    test/test_table_integration.cc
 )
 
 target_link_libraries(
