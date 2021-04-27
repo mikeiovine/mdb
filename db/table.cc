@@ -79,6 +79,7 @@ void Table::WaitForOnGoingCompactions() {
 
 bool Table::NeedsCompaction(int level) {
   if (level == 0) {
+    std::scoped_lock lk(level_mutex_);
     return levels_[level].size() > 3;
   }
 
@@ -88,6 +89,7 @@ bool Table::NeedsCompaction(int level) {
 size_t Table::TotalSize(int level) {
   size_t total{0};
 
+  std::scoped_lock lk(level_mutex_);
   for (const auto& reader : levels_[level]) {
     total += reader->Size();
   }
@@ -117,8 +119,10 @@ void Table::Compact(int level, const Options& options) {
     }
   }
 
+  std::unique_lock lk(level_mutex_);
   auto output_io{options.table_factory->MakeTableWriter(next_table_, options)};
   ++next_table_;
+  lk.unlock();
 
   std::string last_key{""};
 
@@ -146,12 +150,12 @@ void Table::Compact(int level, const Options& options) {
   if (output_io->NumKeys() > 0) {
     output_io->Flush();
 
-    std::unique_lock lk(level_mutex_);
+    lk.lock();
     levels_[level + 1].push_front(
         options.table_factory->MakeTableReader(*output_io, options));
+    lk.unlock();
 
     if (NeedsCompaction(level + 1)) {
-      lk.unlock();
       Compact(level + 1, options);
     }
 
@@ -159,8 +163,7 @@ void Table::Compact(int level, const Options& options) {
     options.env->RemoveFile(output_io->GetFileName());
   }
 
-  std::unique_lock lk(level_mutex_);
-
+  lk.lock();
   for (const auto& reader : level_list) {
     options.env->RemoveFile(reader->GetFileName());
   }
