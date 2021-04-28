@@ -18,10 +18,18 @@ struct KeyValue {
       : kv{std::move(kv_)}, iterator_id{iterator_id_} {}
 
   friend bool operator>(const KeyValue& lhs, const KeyValue& rhs) {
-    return lhs.kv.first > rhs.kv.first;
+    int cmp{lhs.kv.first.compare(rhs.kv.first)};
+    if (cmp == 0) {
+      // In the case that the strings are equal, the more recent one is
+      // smaller. This causes it to have higher priority in the min-heap.
+      return lhs.iterator_id > rhs.iterator_id;
+    }
+    return cmp > 0;
   }
 
   std::pair<std::string, std::string> kv;
+
+  // Lower ID = more recent.
   size_t iterator_id;
 };
 
@@ -63,7 +71,7 @@ void Table::WriteMemtable(const Options& options, const MemTableT& memtable) {
 
   lk.unlock();
 
-  if (!ongoing_compaction_ && NeedsCompaction(0)) {
+  if (!ongoing_compaction_ && NeedsCompaction(0, options)) {
     ongoing_compaction_ = true;
     compaction_future_ =
         std::async(&Table::TriggerCompaction, this, 0, options);
@@ -77,10 +85,10 @@ void Table::WaitForOnGoingCompactions() {
   }
 }
 
-bool Table::NeedsCompaction(int level) {
+bool Table::NeedsCompaction(int level, const Options& opt) {
   if (level == 0) {
     std::scoped_lock lk(level_mutex_);
-    return levels_[level].size() > 3;
+    return levels_[level].size() >= opt.trigger_compaction_at;
   }
 
   return TotalSize(level) > std::pow(10, level + 1) * 1000 * 1000;
@@ -155,7 +163,7 @@ void Table::Compact(int level, const Options& options) {
         options.table_factory->MakeTableReader(*output_io, options));
     lk.unlock();
 
-    if (NeedsCompaction(level + 1)) {
+    if (NeedsCompaction(level + 1, options)) {
       Compact(level + 1, options);
     }
 

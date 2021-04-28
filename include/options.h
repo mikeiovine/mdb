@@ -32,6 +32,9 @@ struct Options {
   // maximum is hit, writes will be stopped until
   // compaction finishes.
   size_t max_num_level_0_files{12};
+
+  // When level 0 has this many tables, a compaction is triggered
+  size_t trigger_compaction_at{4};
 };
 
 }  // namespace mdb

@@ -17,13 +17,6 @@ class Table {
   using LevelT = std::list<std::unique_ptr<TableReader>>;
 
   // Concurrent calls to ValueOf/WriteMemtable are safe.
-  // However, multiple concurrent calls to WriteMemtable
-  // are unsafe: don't try to trigger multiple compactions
-  // at the same time!
-  //
-  // Additionally, WriteMemtable blocks if there is an
-  // ongoing compaction.
-
   std::string ValueOf(std::string_view key) const;
 
   void WriteMemtable(const Options& options, const MemTableT& memtable);
@@ -31,7 +24,7 @@ class Table {
   void WaitForOnGoingCompactions();
 
  private:
-  bool NeedsCompaction(int level);
+  bool NeedsCompaction(int level, const Options& options);
   void Compact(int level, const Options& options);
   void TriggerCompaction(int level, const Options& options);
   size_t TotalSize(int level);
