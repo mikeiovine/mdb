@@ -12,7 +12,7 @@ namespace mdb {
 class LogWriter {
  public:
   LogWriter(int log_number, const Options& options);
-  LogWriter(std::unique_ptr<WriteOnlyIO> file, bool sync);
+  LogWriter(std::unique_ptr<WriteOnlyIO>&& file, bool sync);
 
   LogWriter(const LogWriter&) = delete;
   LogWriter& operator=(const LogWriter&) = delete;

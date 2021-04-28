@@ -12,7 +12,7 @@ LogWriter::LogWriter(int log_number, const Options& options)
           options.env->MakeWriteOnlyIO(util::LogFileName(options, log_number)),
           options.write_sync) {}
 
-LogWriter::LogWriter(std::unique_ptr<WriteOnlyIO> file, bool sync)
+LogWriter::LogWriter(std::unique_ptr<WriteOnlyIO>&& file, bool sync)
     : file_{std::move(file)}, sync_{sync} {
   assert(file_ != nullptr);
 }

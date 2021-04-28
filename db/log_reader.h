@@ -13,7 +13,7 @@ namespace mdb {
 class LogReader {
  public:
   LogReader(int log_number, const Options& options);
-  explicit LogReader(std::unique_ptr<ReadOnlyIO> file);
+  explicit LogReader(std::unique_ptr<ReadOnlyIO>&& file);
 
   MemTableT ReadMemTable();
 

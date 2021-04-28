@@ -12,7 +12,7 @@ LogReader::LogReader(int log_number, const Options& options)
           options.env->MakeReadOnlyIO(util::LogFileName(options, log_number))) {
 }
 
-LogReader::LogReader(std::unique_ptr<ReadOnlyIO> file)
+LogReader::LogReader(std::unique_ptr<ReadOnlyIO>&& file)
     : file_{std::move(file)} {
   assert(file_ != nullptr);
 }

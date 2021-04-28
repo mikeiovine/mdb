@@ -44,7 +44,7 @@ class TableWriter {
 
 class UncompressedTableWriter : public TableWriter {
  public:
-  UncompressedTableWriter(std::unique_ptr<WriteOnlyIO> file, bool sync,
+  UncompressedTableWriter(std::unique_ptr<WriteOnlyIO>&& file, bool sync,
                           size_t block_size)
       : file_{std::move(file)}, sync_{sync}, block_size_{block_size} {
     assert(file_ != nullptr);

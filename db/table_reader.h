@@ -33,7 +33,7 @@ class TableReader {
 
 class UncompressedTableReader : public TableReader {
  public:
-  UncompressedTableReader(std::unique_ptr<ReadOnlyIO> file, IndexT index)
+  UncompressedTableReader(std::unique_ptr<ReadOnlyIO>&& file, IndexT index)
       : file_{std::move(file)}, index_{std::move(index)} {}
 
   std::optional<std::string> ValueOf(std::string_view key) override;
