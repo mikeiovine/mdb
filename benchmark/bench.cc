@@ -12,16 +12,16 @@ using BenchmarkMap =
 using BenchmarkList =
     std::vector<std::pair<std::string, std::shared_ptr<Benchmark>>>;
 
-const BenchmarkMap& GetBenchmarkMap() {
+BenchmarkMap GetBenchmarkMap() {
   // This map must be updated when adding a new benchmark!
-  static BenchmarkMap map{
+  BenchmarkMap map{
       {"write_random", std::make_shared<WriteRandomBenchmark>()}};
 
   return map;
 }
 
 BenchmarkList CreateBenchmark(const std::string& benchmark) {
-  auto& map{GetBenchmarkMap()};
+  auto map{GetBenchmarkMap()};
 
   BenchmarkList list;
 
@@ -42,7 +42,7 @@ BenchmarkList CreateBenchmark(const std::string& benchmark) {
 }
 
 bool ValidateBenchmark(const char* /*flagname*/, const std::string& value) {
-  auto& map{GetBenchmarkMap()};
+  auto map{GetBenchmarkMap()};
 
   if (map.find(value) == map.end() && !value.empty()) {
     std::cerr << "Invalid benchmark option. Valid options are:\n";
