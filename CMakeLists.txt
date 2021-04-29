@@ -37,6 +37,18 @@ target_link_libraries(
     gflags
 )
 
+add_executable(
+    mdb_bench
+    benchmark/bench.cc
+    benchmark/write_random.cc
+)
+
+target_link_libraries(
+    mdb_bench
+    mdb_lib
+    gflags
+)
+
 FetchContent_Declare(
   googletest
   URL https://github.com/google/googletest/archive/master.zip
