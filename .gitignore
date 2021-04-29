@@ -34,3 +34,4 @@
 # MDB
 *.dat
 db_files/
+compile_commands.json
