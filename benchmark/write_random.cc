@@ -48,11 +48,11 @@ bool WriteRandomBenchmark::Run() {
 
   auto key_value_pairs{CreateKeyValuePairs()};
 
-  auto start{std::chrono::steady_clock::now()};
+  auto start{std::chrono::high_resolution_clock::now()};
   for (const auto& pair : key_value_pairs) {
     db.Put(pair.first, pair.second);
   }
-  auto end{std::chrono::steady_clock::now()};
+  auto end{std::chrono::high_resolution_clock::now()};
   stats_.time = std::chrono::duration_cast<std::chrono::seconds>(end - start);
 
   std::set<std::string> seen_keys;
