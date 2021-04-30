@@ -5,7 +5,7 @@
 
 namespace mdb {
 
-class Options;
+struct Options;
 
 namespace util {
 
