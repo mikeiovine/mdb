@@ -5,8 +5,6 @@ namespace mdb {
 DB::DB(Options opt)
     : options_{std::move(opt)}, logger_{LogWriter(0, options_)} {}
 
-DB::~DB() { table_.WaitForOnGoingCompactions(); }
-
 void DB::Put(std::string_view key, std::string_view value) {
   if (key.empty() || value.empty()) {
     throw std::invalid_argument("Key and value must be non-empty.");
@@ -74,6 +72,9 @@ void DB::ClearMemtable() {
   next_log_ += 1;
 }
 
-void DB::WaitForOnGoingCompactions() { table_.WaitForOnGoingCompactions(); }
+void DB::WaitForOngoingCompactions() {
+  std::unique_lock lk(write_mutex_);
+  table_.WaitForOngoingCompactions();
+}
 
 }  // namespace mdb

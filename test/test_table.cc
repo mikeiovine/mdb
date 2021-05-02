@@ -42,7 +42,7 @@ TEST(TestTable, TestTableCompactionTwoTables) {
 
   table.WriteMemtable(opt, memtable2);
 
-  table.WaitForOnGoingCompactions();
+  table.WaitForOngoingCompactions();
 
   ASSERT_EQ(table.ValueOf("3"), "1");
   ASSERT_EQ(table.ValueOf("2"), "");
@@ -81,7 +81,7 @@ TEST(TestTable, TestTableCompactionThreeTables) {
 
   table.WriteMemtable(opt, memtable3);
 
-  table.WaitForOnGoingCompactions();
+  table.WaitForOngoingCompactions();
 
   ASSERT_EQ(table.ValueOf("4"), "1");
   ASSERT_EQ(table.ValueOf("3"), "");

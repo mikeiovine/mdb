@@ -58,7 +58,7 @@ std::string Table::ValueOf(std::string_view key) const {
 
 void Table::WriteMemtable(const Options& options, const MemTableT& memtable) {
   if (levels_[0].size() >= options.max_num_level_0_files) {
-    WaitForOnGoingCompactions();
+    WaitForOngoingCompactions();
   }
 
   std::unique_lock lk(level_mutex_);
@@ -78,8 +78,7 @@ void Table::WriteMemtable(const Options& options, const MemTableT& memtable) {
   }
 }
 
-void Table::WaitForOnGoingCompactions() {
-  using namespace std::chrono_literals;
+void Table::WaitForOngoingCompactions() {
   if (compaction_future_.valid()) {
     compaction_future_.get();
   }

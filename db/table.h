@@ -19,9 +19,9 @@ class Table {
   // Concurrent calls to ValueOf/WriteMemtable are safe.
   std::string ValueOf(std::string_view key) const;
 
+  // These two methods require external synchronization.
   void WriteMemtable(const Options& options, const MemTableT& memtable);
-
-  void WaitForOnGoingCompactions();
+  void WaitForOngoingCompactions();
 
  private:
   bool NeedsCompaction(int level, const Options& options);

@@ -29,7 +29,7 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  db.WaitForOnGoingCompactions();
+  db.WaitForOngoingCompactions();
   std::cout << "finished, running assertions" << std::endl;
 
   for (long i = 0; i < 1000000; i++) {
