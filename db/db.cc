@@ -75,7 +75,6 @@ void DB::ClearMemtable() {
 }
 
 void DB::WaitForOngoingCompactions() {
-  std::unique_lock lk(write_mutex_);
   table_.WaitForOngoingCompactions();
 }
 
