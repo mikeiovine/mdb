@@ -52,6 +52,9 @@ bool WriteRandomBenchmark::Run() {
   for (const auto& pair : key_value_pairs) {
     db.Put(pair.first, pair.second);
   }
+
+  db.WaitForOngoingCompactions();
+
   auto end{std::chrono::high_resolution_clock::now()};
   stats_.time = std::chrono::duration_cast<std::chrono::seconds>(end - start);
 
@@ -60,9 +63,15 @@ bool WriteRandomBenchmark::Run() {
        it++) {
     // Only consider the most recent version of duplicate keys
     if (seen_keys.find(it->first) == seen_keys.end()) {
-      if (!(db.Get(it->first) == it->second)) {
-        stats_.failure_reason = "Database wrote wrong value '" + it->second +
-                                "' for key '" + it->first + "'";
+      auto val{db.Get(it->first)};
+      if (val != it->second) {
+        if (val.empty()) {
+          val = "[empty string]";
+        }
+
+        stats_.failure_reason = "Database wrote wrong value '" + val +
+                                "' for key '" + it->first + "'. Expected: '" +
+                                it->second + "'";
 
         return false;
       }

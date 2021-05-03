@@ -33,11 +33,13 @@ struct KeyValue {
   size_t iterator_id;
 };
 
+}  // namespace
+
 using PriorityQueue = std::priority_queue<KeyValue, std::vector<KeyValue>,
                                           // Use a min-heap
                                           std::greater<KeyValue>>;
 
-}  // namespace
+Table::~Table() { WaitForOngoingCompactions(); }
 
 std::string Table::ValueOf(std::string_view key) const {
   std::shared_lock lk(level_mutex_);
@@ -63,25 +65,21 @@ void Table::WriteMemtable(const Options& options, const MemTableT& memtable) {
 
   std::unique_lock lk(level_mutex_);
 
-  // New tables always go to level 0
   levels_[0].push_front(
       options.table_factory->TableFromMemtable(next_table_, options, memtable));
 
   ++next_table_;
-
   lk.unlock();
 
   if (!ongoing_compaction_ && NeedsCompaction(0, options)) {
     ongoing_compaction_ = true;
-    compaction_future_ =
-        std::async(&Table::TriggerCompaction, this, 0, options);
+    std::thread(&Table::TriggerCompaction, this, 0, options).detach();
   }
 }
 
 void Table::WaitForOngoingCompactions() {
-  if (compaction_future_.valid()) {
-    compaction_future_.get();
-  }
+  std::unique_lock lk(compaction_mutex_);
+  compaction_cv_.wait(lk, [this] { return !ongoing_compaction_; });
 }
 
 bool Table::NeedsCompaction(int level, const Options& opt) {
@@ -107,9 +105,11 @@ size_t Table::TotalSize(int level) {
 void Table::TriggerCompaction(int level, const Options& options) {
   Compact(level, options);
   ongoing_compaction_ = false;
+  compaction_cv_.notify_all();
 }
 
 void Table::Compact(int level, const Options& options) {
+  std::shared_lock level_read(level_mutex_);
   LevelT& level_list{levels_[level]};
 
   PriorityQueue pq;
@@ -126,10 +126,16 @@ void Table::Compact(int level, const Options& options) {
     }
   }
 
-  std::unique_lock lk(level_mutex_);
+  // Save this position because tables might be added while we're doing the
+  // compaction. Note insertions won't invalidate level_list_start.
+  auto level_list_start{level_list.begin()};
+
+  level_read.unlock();
+
+  std::unique_lock level_write(level_mutex_);
   auto output_io{options.table_factory->MakeTableWriter(next_table_, options)};
   ++next_table_;
-  lk.unlock();
+  level_write.unlock();
 
   std::string last_key{""};
 
@@ -157,10 +163,10 @@ void Table::Compact(int level, const Options& options) {
   if (output_io->NumKeys() > 0) {
     output_io->Flush();
 
-    lk.lock();
+    level_write.lock();
     levels_[level + 1].push_front(
         options.table_factory->MakeTableReader(*output_io, options));
-    lk.unlock();
+    level_write.unlock();
 
     if (NeedsCompaction(level + 1, options)) {
       Compact(level + 1, options);
@@ -170,11 +176,13 @@ void Table::Compact(int level, const Options& options) {
     options.env->RemoveFile(output_io->GetFileName());
   }
 
-  lk.lock();
-  for (const auto& reader : level_list) {
-    options.env->RemoveFile(reader->GetFileName());
+  level_write.lock();
+  for (auto it = level_list_start; it != level_list.end(); it++) {
+    options.env->RemoveFile((*it)->GetFileName());
   }
-  level_list.clear();
+
+  level_list.erase(level_list_start, level_list.end());
+  ;
 }
 
 }  // namespace mdb

@@ -70,6 +70,8 @@ void DB::ClearMemtable() {
 
   logger_ = LogWriter(next_log_, options_);
   next_log_ += 1;
+
+  memtable_.clear();
 }
 
 void DB::WaitForOngoingCompactions() {

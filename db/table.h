@@ -14,13 +14,25 @@ namespace mdb {
 
 class Table {
  public:
+  Table() = default;
+
+  Table(const Table&) = delete;
+  Table& operator=(const Table&) = delete;
+
+  Table(Table&&) = delete;
+  Table& operator=(Table&&) = delete;
+
+  ~Table();
+
   using LevelT = std::list<std::unique_ptr<TableReader>>;
 
   // Concurrent calls to ValueOf/WriteMemtable are safe.
   std::string ValueOf(std::string_view key) const;
 
-  // These two methods require external synchronization.
+  // This method requires external synchronization. The implementation
+  // assumes that it is being called by only one thread.
   void WriteMemtable(const Options& options, const MemTableT& memtable);
+
   void WaitForOngoingCompactions();
 
  private:
@@ -33,10 +45,10 @@ class Table {
 
   std::map<int, LevelT> levels_;
 
-  std::future<void> compaction_future_;
-
   mutable std::shared_mutex level_mutex_;
 
+  std::mutex compaction_mutex_;
+  std::condition_variable compaction_cv_;
   bool ongoing_compaction_{false};
 };
 

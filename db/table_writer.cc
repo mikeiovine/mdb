@@ -1,7 +1,5 @@
 #include "table_writer.h"
 
-#include <iostream>
-
 namespace mdb {
 
 IndexT UncompressedTableWriter::GetIndex() const { return index_; }

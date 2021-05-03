@@ -1,6 +1,7 @@
 #include "table_reader.h"
 
 #include <string>
+#include <system_error>
 #include <vector>
 
 namespace mdb {
