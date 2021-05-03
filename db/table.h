@@ -14,7 +14,9 @@ namespace mdb {
 
 class Table {
  public:
-  Table() = default;
+  using LevelT = std::list<std::unique_ptr<TableReader>>;
+
+  Table() { levels_[0] = LevelT{}; }
 
   Table(const Table&) = delete;
   Table& operator=(const Table&) = delete;
@@ -23,8 +25,6 @@ class Table {
   Table& operator=(Table&&) = delete;
 
   ~Table();
-
-  using LevelT = std::list<std::unique_ptr<TableReader>>;
 
   // Concurrent calls to ValueOf/WriteMemtable are safe.
   std::string ValueOf(std::string_view key) const;

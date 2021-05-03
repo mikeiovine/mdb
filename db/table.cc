@@ -63,14 +63,15 @@ void Table::WriteMemtable(const Options& options, const MemTableT& memtable) {
     WaitForOngoingCompactions();
   }
 
-  std::unique_lock lk(level_mutex_);
+  std::unique_lock level_lk(level_mutex_);
 
   levels_[0].push_front(
       options.table_factory->TableFromMemtable(next_table_, options, memtable));
 
   ++next_table_;
-  lk.unlock();
+  level_lk.unlock();
 
+  std::scoped_lock compaction_lk(compaction_mutex_);
   if (!ongoing_compaction_ && NeedsCompaction(0, options)) {
     ongoing_compaction_ = true;
     std::thread(&Table::TriggerCompaction, this, 0, options).detach();
@@ -84,7 +85,7 @@ void Table::WaitForOngoingCompactions() {
 
 bool Table::NeedsCompaction(int level, const Options& opt) {
   if (level == 0) {
-    std::scoped_lock lk(level_mutex_);
+    std::shared_lock lk(level_mutex_);
     return levels_[level].size() >= opt.trigger_compaction_at;
   }
 
@@ -94,7 +95,7 @@ bool Table::NeedsCompaction(int level, const Options& opt) {
 size_t Table::TotalSize(int level) {
   size_t total{0};
 
-  std::scoped_lock lk(level_mutex_);
+  std::shared_lock lk(level_mutex_);
   for (const auto& reader : levels_[level]) {
     total += reader->Size();
   }
@@ -104,7 +105,10 @@ size_t Table::TotalSize(int level) {
 
 void Table::TriggerCompaction(int level, const Options& options) {
   Compact(level, options);
-  ongoing_compaction_ = false;
+  {
+    std::scoped_lock compaction_lk(compaction_mutex_);
+    ongoing_compaction_ = false;
+  }
   compaction_cv_.notify_all();
 }
 
@@ -129,13 +133,14 @@ void Table::Compact(int level, const Options& options) {
   // Save this position because tables might be added while we're doing the
   // compaction. Note insertions won't invalidate level_list_start.
   auto level_list_start{level_list.begin()};
-
   level_read.unlock();
 
   std::unique_lock level_write(level_mutex_);
-  auto output_io{options.table_factory->MakeTableWriter(next_table_, options)};
+  auto table_id{next_table_};
   ++next_table_;
   level_write.unlock();
+
+  auto output_io{options.table_factory->MakeTableWriter(table_id, options)};
 
   std::string last_key{""};
 
@@ -182,7 +187,6 @@ void Table::Compact(int level, const Options& options) {
   }
 
   level_list.erase(level_list_start, level_list.end());
-  ;
 }
 
 }  // namespace mdb
