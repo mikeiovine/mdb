@@ -74,8 +74,6 @@ void DB::ClearMemtable() {
   memtable_.clear();
 }
 
-void DB::WaitForOngoingCompactions() {
-  table_.WaitForOngoingCompactions();
-}
+void DB::WaitForOngoingCompactions() { table_.WaitForOngoingCompactions(); }
 
 }  // namespace mdb

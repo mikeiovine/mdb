@@ -59,10 +59,6 @@ std::string Table::ValueOf(std::string_view key) const {
 }
 
 void Table::WriteMemtable(const Options& options, const MemTableT& memtable) {
-  if (levels_[0].size() >= options.max_num_level_0_files) {
-    WaitForOngoingCompactions();
-  }
-
   std::unique_lock level_lk(level_mutex_);
 
   levels_[0].push_front(
@@ -83,20 +79,30 @@ void Table::WaitForOngoingCompactions() {
   compaction_cv_.wait(lk, [this] { return !ongoing_compaction_; });
 }
 
-bool Table::NeedsCompaction(int level, const Options& opt) {
+bool Table::NeedsCompaction(int level, const Options& opt) const {
   if (level == 0) {
     std::shared_lock lk(level_mutex_);
-    return levels_[level].size() >= opt.trigger_compaction_at;
+    auto it{levels_.find(0)};
+    if (it == levels_.end()) {
+      return false;
+    }
+
+    return it->second.size() >= opt.trigger_compaction_at;
   }
 
   return TotalSize(level) > std::pow(10, level + 1) * 1000 * 1000;
 }
 
-size_t Table::TotalSize(int level) {
+size_t Table::TotalSize(int level) const {
   size_t total{0};
 
   std::shared_lock lk(level_mutex_);
-  for (const auto& reader : levels_[level]) {
+  auto it{levels_.find(level)};
+  if (it == levels_.end()) {
+    return 0;
+  }
+
+  for (const auto& reader : it->second) {
     total += reader->Size();
   }
 
@@ -112,9 +118,16 @@ void Table::TriggerCompaction(int level, const Options& options) {
   compaction_cv_.notify_all();
 }
 
+void Table::CreateLevelIfAbsent(int level) {
+  std::scoped_lock lk(level_mutex_);
+  levels_[level] = LevelT{};
+}
+
 void Table::Compact(int level, const Options& options) {
+  CreateLevelIfAbsent(level);
+
   std::shared_lock level_read(level_mutex_);
-  LevelT& level_list{levels_[level]};
+  LevelT& level_list{levels_.at(level)};
 
   PriorityQueue pq;
 

@@ -16,7 +16,7 @@ class Table {
  public:
   using LevelT = std::list<std::unique_ptr<TableReader>>;
 
-  Table() { levels_[0] = LevelT{}; }
+  Table() = default;
 
   Table(const Table&) = delete;
   Table& operator=(const Table&) = delete;
@@ -36,10 +36,11 @@ class Table {
   void WaitForOngoingCompactions();
 
  private:
-  bool NeedsCompaction(int level, const Options& options);
+  bool NeedsCompaction(int level, const Options& options) const;
   void Compact(int level, const Options& options);
   void TriggerCompaction(int level, const Options& options);
-  size_t TotalSize(int level);
+  size_t TotalSize(int level) const;
+  void CreateLevelIfAbsent(int level);
 
   int next_table_{0};
 
