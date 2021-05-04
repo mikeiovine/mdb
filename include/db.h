@@ -22,6 +22,13 @@ class DB {
 
   void Delete(std::string_view key);
 
+  // Concurrent calls to WaitForOngoingCompaction and the other public
+  // methods are safe. However, be aware that if a writer thread A
+  // calls Put() at the same time that thread B calls
+  // WaitForOngoingCompactions(), and thread A triggers a compaction, then
+  // thread B may or may not wait for the compaction depending on the exact
+  // ordering of events. To avoid any surprises, use this method after all
+  // writer threads finish their work.
   void WaitForOngoingCompactions();
 
  private:
