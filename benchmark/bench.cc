@@ -15,38 +15,38 @@ using BenchmarkList =
 BenchmarkMap GetBenchmarkMap() {
   // This map must be updated when adding a new benchmark!
   BenchmarkMap map{
-      {"write_random", std::make_shared<WriteRandomBenchmark>()}};
+      {"write_random", std::make_shared<WriteRandomBenchmark>(
+                           WriteRandomBenchmark::GetBenchmarkOptions())}};
 
   return map;
 }
 
-BenchmarkList CreateBenchmark(const std::string& benchmark) {
+BenchmarkList CreateBenchmark(const std::string &benchmark) {
   auto map{GetBenchmarkMap()};
 
   BenchmarkList list;
 
   // Empty -> return all benchmarks
   if (benchmark.empty()) {
-    std::for_each(map.cbegin(), map.cend(), [&list](auto& pair) {
-      list.emplace_back(pair.first, pair.second->Create());
-    });
+    std::for_each(map.cbegin(), map.cend(),
+                  [&list](const auto &pair) { list.push_back(pair); });
 
   } else {
     auto it{map.find(benchmark)};
     assert(it != map.end());
 
-    list.emplace_back(it->first, it->second->Create());
+    list.push_back(*it);
   }
 
   return list;
 }
 
-bool ValidateBenchmark(const char* /*flagname*/, const std::string& value) {
+bool ValidateBenchmark(const char * /*flagname*/, const std::string &value) {
   auto map{GetBenchmarkMap()};
 
   if (map.find(value) == map.end() && !value.empty()) {
     std::cerr << "Invalid benchmark option. Valid options are:\n";
-    for (const auto& benchmark : map) {
+    for (const auto &benchmark : map) {
       std::cerr << "    " << benchmark.first << '\n';
     }
     return false;
@@ -64,15 +64,15 @@ DEFINE_uint32(key_size, 16, "Key size in bytes");
 DEFINE_uint32(value_size, 100, "Value size in bytes");
 DEFINE_uint32(num_entries, 1e6, "Number of entries to write/read");
 
-int main(int argc, char* argv[]) {
+int main(int argc, char *argv[]) {
   gflags::ParseCommandLineFlags(&argc, &argv, true);
 
   auto benchmarks{CreateBenchmark(FLAGS_benchmark)};
 
-  for (const auto& benchmark_pair : benchmarks) {
+  for (const auto &benchmark_pair : benchmarks) {
     std::cout << "Running benchmark " << benchmark_pair.first << '\n';
 
-    auto& benchmark{benchmark_pair.second};
+    auto &benchmark{benchmark_pair.second};
     assert(benchmark != nullptr);
 
     bool success{benchmark->Run()};

@@ -33,5 +33,7 @@
 
 # MDB
 *.dat
+*.mdb
+*.csv
 db_files/
 compile_commands.json
