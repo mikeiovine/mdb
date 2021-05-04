@@ -121,7 +121,7 @@ void DiskStorageManager::TriggerCompaction(int level, const Options& options) {
 }
 
 void DiskStorageManager::Compact(int level, const Options& options) {
-  std::shared_lock level_read(level_mutex_);
+  std::shared_lock level_read_lock(level_mutex_);
 
   // levels_[level] should have already been created if we are calling
   // Compact(). Throw an exception if it doesn't exist.
@@ -144,45 +144,46 @@ void DiskStorageManager::Compact(int level, const Options& options) {
   // Save this position because tables might be added while we're doing the
   // compaction. Note insertions won't invalidate level_list_start.
   auto level_list_start{level_list.begin()};
-  level_read.unlock();
+  level_read_lock.unlock();
 
-  std::unique_lock level_write(level_mutex_);
+  std::unique_lock level_write_lock(level_mutex_);
   auto table_id{next_table_};
   ++next_table_;
-  level_write.unlock();
+  level_write_lock.unlock();
 
   auto output_io{options.table_factory->MakeTableWriter(table_id, options)};
 
   std::string last_key{""};
 
   while (!pq.empty()) {
-    auto best{pq.top()};
+    auto next_pair{pq.top()};
 
     // If we've seen the key before, we don't want to take it.
-    if (best.kv.first != last_key) {
+    if (next_pair.kv.first != last_key) {
       // Don't take deleted keys during compaction.
-      if (!best.kv.second.empty()) {
-        output_io->Add(best.kv.first, best.kv.second);
+      if (!next_pair.kv.second.empty()) {
+        output_io->Add(next_pair.kv.first, next_pair.kv.second);
       }
-      last_key = std::move(best.kv.first);
+      last_key = std::move(next_pair.kv.first);
     }
 
-    std::pair<TableIterator, TableIterator>& it{iterators[best.iterator_id]};
+    std::pair<TableIterator, TableIterator>& it{
+        iterators[next_pair.iterator_id]};
     ++it.first;
 
     pq.pop();
     if (it.first != it.second) {
-      pq.emplace(*it.first, best.iterator_id);
+      pq.emplace(*it.first, next_pair.iterator_id);
     }
   }
 
   if (output_io->NumKeys() > 0) {
     output_io->Flush();
 
-    level_write.lock();
+    level_write_lock.lock();
     levels_[level + 1].push_front(
         options.table_factory->MakeTableReader(*output_io, options));
-    level_write.unlock();
+    level_write_lock.unlock();
 
     if (NeedsCompaction(level + 1, options)) {
       Compact(level + 1, options);
@@ -192,7 +193,7 @@ void DiskStorageManager::Compact(int level, const Options& options) {
     options.env->RemoveFile(output_io->GetFileName());
   }
 
-  level_write.lock();
+  level_write_lock.lock();
   for (auto it = level_list_start; it != level_list.end(); it++) {
     options.env->RemoveFile((*it)->GetFileName());
   }
