@@ -1,4 +1,4 @@
-#include "table.h"
+#include "disk_storage_manager.h"
 
 #include <chrono>
 #include <cmath>
@@ -39,9 +39,9 @@ using PriorityQueue = std::priority_queue<KeyValue, std::vector<KeyValue>,
                                           // Use a min-heap
                                           std::greater<KeyValue>>;
 
-Table::~Table() { WaitForOngoingCompactions(); }
+DiskStorageManager::~DiskStorageManager() { WaitForOngoingCompactions(); }
 
-std::string Table::ValueOf(std::string_view key) const {
+std::string DiskStorageManager::ValueOf(std::string_view key) const {
   std::shared_lock lk(level_mutex_);
 
   for (const auto& levelid_and_level : levels_) {
@@ -58,7 +58,8 @@ std::string Table::ValueOf(std::string_view key) const {
   return "";
 }
 
-void Table::WriteMemtable(const Options& options, const MemTableT& memtable) {
+void DiskStorageManager::WriteMemtable(const Options& options,
+                                       const MemTableT& memtable) {
   std::unique_lock level_lk(level_mutex_);
 
   levels_[0].push_front(
@@ -70,16 +71,17 @@ void Table::WriteMemtable(const Options& options, const MemTableT& memtable) {
   std::scoped_lock compaction_lk(compaction_mutex_);
   if (!ongoing_compaction_ && NeedsCompaction(0, options)) {
     ongoing_compaction_ = true;
-    std::thread(&Table::TriggerCompaction, this, 0, options).detach();
+    std::thread(&DiskStorageManager::TriggerCompaction, this, 0, options)
+        .detach();
   }
 }
 
-void Table::WaitForOngoingCompactions() {
+void DiskStorageManager::WaitForOngoingCompactions() {
   std::unique_lock lk(compaction_mutex_);
   compaction_cv_.wait(lk, [this] { return !ongoing_compaction_; });
 }
 
-bool Table::NeedsCompaction(int level, const Options& opt) const {
+bool DiskStorageManager::NeedsCompaction(int level, const Options& opt) const {
   if (level == 0) {
     std::shared_lock lk(level_mutex_);
     auto it{levels_.find(0)};
@@ -93,7 +95,7 @@ bool Table::NeedsCompaction(int level, const Options& opt) const {
   return TotalSize(level) > std::pow(10, level + 1) * 1000 * 1000;
 }
 
-size_t Table::TotalSize(int level) const {
+size_t DiskStorageManager::TotalSize(int level) const {
   size_t total{0};
 
   std::shared_lock lk(level_mutex_);
@@ -109,7 +111,7 @@ size_t Table::TotalSize(int level) const {
   return total;
 }
 
-void Table::TriggerCompaction(int level, const Options& options) {
+void DiskStorageManager::TriggerCompaction(int level, const Options& options) {
   Compact(level, options);
   {
     std::scoped_lock compaction_lk(compaction_mutex_);
@@ -118,15 +120,11 @@ void Table::TriggerCompaction(int level, const Options& options) {
   compaction_cv_.notify_all();
 }
 
-void Table::CreateLevelIfAbsent(int level) {
-  std::scoped_lock lk(level_mutex_);
-  levels_[level] = LevelT{};
-}
-
-void Table::Compact(int level, const Options& options) {
-  CreateLevelIfAbsent(level);
-
+void DiskStorageManager::Compact(int level, const Options& options) {
   std::shared_lock level_read(level_mutex_);
+
+  // levels_[level] should have already been created if we are calling
+  // Compact(). Throw an exception if it doesn't exist.
   LevelT& level_list{levels_.at(level)};
 
   PriorityQueue pq;

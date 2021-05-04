@@ -23,7 +23,7 @@ std::string DB::Get(std::string_view key) {
 
   lk.unlock();
 
-  return table_.ValueOf(key);
+  return disk_storage_manager_.ValueOf(key);
 }
 
 void DB::Delete(std::string_view key) {
@@ -45,7 +45,7 @@ void DB::PutOrDelete(std::string_view key, std::string_view value) {
 
   if (cache_size_ > options_.memtable_max_size) {
     // Flush the memtable and create a new reader.
-    table_.WriteMemtable(options_, memtable_);
+    disk_storage_manager_.WriteMemtable(options_, memtable_);
 
     memtable_lk.lock();
     ClearMemtable();
@@ -74,6 +74,8 @@ void DB::ClearMemtable() {
   memtable_.clear();
 }
 
-void DB::WaitForOngoingCompactions() { table_.WaitForOngoingCompactions(); }
+void DB::WaitForOngoingCompactions() {
+  disk_storage_manager_.WaitForOngoingCompactions();
+}
 
 }  // namespace mdb

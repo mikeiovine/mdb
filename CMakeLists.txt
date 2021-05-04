@@ -16,7 +16,7 @@ add_library(
     db/table_reader.cc
     db/table_writer.cc
     db/table_factory.cc
-    db/table.cc
+    db/disk_storage_manager.cc
     db/db.cc
 )
 
@@ -69,7 +69,7 @@ add_executable(
     test/test_helpers.cc
     test/test_log_integration.cc
     test/test_table_integration.cc
-    test/test_table.cc
+    test/test_disk_storage_manager.cc
 )
 
 target_link_libraries(

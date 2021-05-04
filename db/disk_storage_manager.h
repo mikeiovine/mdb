@@ -12,19 +12,19 @@
 
 namespace mdb {
 
-class Table {
+class DiskStorageManager {
  public:
   using LevelT = std::list<std::unique_ptr<TableReader>>;
 
-  Table() = default;
+  DiskStorageManager() = default;
 
-  Table(const Table&) = delete;
-  Table& operator=(const Table&) = delete;
+  DiskStorageManager(const DiskStorageManager&) = delete;
+  DiskStorageManager& operator=(const DiskStorageManager&) = delete;
 
-  Table(Table&&) = delete;
-  Table& operator=(Table&&) = delete;
+  DiskStorageManager(DiskStorageManager&&) = delete;
+  DiskStorageManager& operator=(DiskStorageManager&&) = delete;
 
-  ~Table();
+  ~DiskStorageManager();
 
   // Concurrent calls to ValueOf/WriteMemtable are safe.
   std::string ValueOf(std::string_view key) const;

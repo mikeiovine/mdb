@@ -5,9 +5,9 @@
 #include <shared_mutex>
 #include <string>
 
+#include "disk_storage_manager.h"
 #include "log_writer.h"
 #include "options.h"
-#include "table.h"
 #include "types.h"
 
 namespace mdb {
@@ -48,7 +48,7 @@ class DB {
 
   MemTableT memtable_;
 
-  Table table_;
+  DiskStorageManager disk_storage_manager_;
 };
 
 }  // namespace mdb
