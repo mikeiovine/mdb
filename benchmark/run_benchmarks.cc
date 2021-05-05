@@ -7,6 +7,9 @@
 
 #include "benchmark_interface.h"
 
+namespace mdb {
+namespace benchmark {
+
 using BenchmarkMap =
     std::unordered_map<std::string, std::shared_ptr<Benchmark>>;
 using BenchmarkList =
@@ -64,7 +67,12 @@ DEFINE_uint32(key_size, 16, "Key size in bytes");
 DEFINE_uint32(value_size, 100, "Value size in bytes");
 DEFINE_uint32(num_entries, 1e6, "Number of entries to write/read");
 
+}  // namespace benchmark
+}  // namespace mdb
+
 int main(int argc, char *argv[]) {
+  using namespace mdb::benchmark;
+
   gflags::ParseCommandLineFlags(&argc, &argv, true);
 
   auto benchmarks{CreateBenchmark(FLAGS_benchmark)};

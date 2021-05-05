@@ -5,43 +5,15 @@
 #include <set>
 
 #include "benchmark_interface.h"
+#include "benchmark_util.h"
 #include "db.h"
 
-using namespace mdb;
+namespace mdb {
+namespace benchmark {
 
 DECLARE_uint32(num_entries);
 DECLARE_uint32(key_size);
 DECLARE_uint32(value_size);
-
-namespace {
-
-std::string RandomString(size_t size) {
-  std::string output;
-  output.reserve(size);
-
-  static const char *possible_characters =
-      "abcdefghijklmnopqrstuvwxyz"
-      "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-      "1234567890!@#$%^&*()";
-
-  for (size_t i = 0; i < size; i++) {
-    size_t idx{std::rand() % (sizeof(possible_characters) - 1)};
-    output += possible_characters[idx];
-  }
-
-  return output;
-}
-
-std::vector<std::pair<std::string, std::string>> CreateKeyValuePairs() {
-  std::vector<std::pair<std::string, std::string>> key_values;
-  for (size_t i = 0; i < FLAGS_num_entries; i++) {
-    key_values.emplace_back(RandomString(FLAGS_key_size),
-                            RandomString(FLAGS_value_size));
-  }
-  return key_values;
-}
-
-}  // namespace
 
 bool WriteRandomBenchmark::Run() {
   // TODO make this directory automatically
@@ -61,7 +33,8 @@ bool WriteRandomBenchmark::Run() {
     }
   }
 
-  auto key_value_pairs{CreateKeyValuePairs()};
+  auto key_value_pairs{CreateRandomKeyValuePairs(
+      FLAGS_num_entries, FLAGS_key_size, FLAGS_value_size)};
 
   auto start{std::chrono::high_resolution_clock::now()};
   int n{1};
@@ -108,3 +81,6 @@ bool WriteRandomBenchmark::Run() {
 
   return true;
 }
+
+}  // namespace benchmark
+}  // namespace mdb

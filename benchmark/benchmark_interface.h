@@ -5,6 +5,9 @@
 #include <memory>
 #include <string>
 
+namespace mdb {
+namespace benchmark {
+
 struct BenchmarkStats {
   std::string failure_reason{""};
 
@@ -64,3 +67,6 @@ class WriteRandomBenchmark : public Benchmark {
 
   bool Run() override;
 };
+
+}  // namespace benchmark
+}  // namespace mdb

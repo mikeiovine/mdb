@@ -40,8 +40,9 @@ target_link_libraries(
 
 add_executable(
     mdb_bench
-    benchmark/bench.cc
+    benchmark/run_benchmarks.cc
     benchmark/write_random.cc
+    benchmark/benchmark_util.cc
 )
 
 target_link_libraries(
