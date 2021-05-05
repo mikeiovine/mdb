@@ -35,7 +35,7 @@ struct BenchmarkOptions {
 
 class Benchmark {
  public:
-  Benchmark(BenchmarkOptions options) : options_{options} {}
+  Benchmark(BenchmarkOptions options) : options_{std::move(options)} {}
 
   Benchmark(const Benchmark&) = default;
   Benchmark& operator=(const Benchmark&) = default;
@@ -58,11 +58,24 @@ class Benchmark {
 
 class WriteRandomBenchmark : public Benchmark {
  public:
-  using Benchmark::Benchmark;
+  WriteRandomBenchmark(BenchmarkOptions options)
+      : Benchmark(std::move(options)) {}
 
   // Default options for this benchmark
   static BenchmarkOptions GetBenchmarkOptions() {
     return {.write_metrics = true, .metrics_filename = "write_random_metrics"};
+  }
+
+  bool Run() override;
+};
+
+class ReadRandomBenchmark : public Benchmark {
+ public:
+  ReadRandomBenchmark(BenchmarkOptions options)
+      : Benchmark(std::move(options)) {}
+
+  static BenchmarkOptions GetBenchmarkOptions() {
+    return {.write_metrics = true, .metrics_filename = "read_random_metrics"};
   }
 
   bool Run() override;

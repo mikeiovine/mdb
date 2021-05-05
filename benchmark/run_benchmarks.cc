@@ -19,7 +19,9 @@ BenchmarkMap GetBenchmarkMap() {
   // This map must be updated when adding a new benchmark!
   BenchmarkMap map{
       {"write_random", std::make_shared<WriteRandomBenchmark>(
-                           WriteRandomBenchmark::GetBenchmarkOptions())}};
+                           WriteRandomBenchmark::GetBenchmarkOptions())},
+      {"read_random", std::make_shared<ReadRandomBenchmark>(
+                          ReadRandomBenchmark::GetBenchmarkOptions())}};
 
   return map;
 }

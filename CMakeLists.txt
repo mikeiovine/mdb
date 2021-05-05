@@ -42,6 +42,7 @@ add_executable(
     mdb_bench
     benchmark/run_benchmarks.cc
     benchmark/write_random.cc
+    benchmark/read_random.cc
     benchmark/benchmark_util.cc
 )
 

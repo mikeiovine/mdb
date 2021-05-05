@@ -20,17 +20,9 @@ bool WriteRandomBenchmark::Run() {
   Options opt{.path = "./benchmark/db_files/write_random"};
   DB db(opt);
 
-  auto filename{options_.metrics_path / (options_.metrics_filename + ".csv")};
-  std::ofstream metrics{filename};
-
-  if (options_.write_metrics) {
-    if (!metrics.is_open()) {
-      std::cerr << "WARNING: write_metrics is set to true, but the file "
-                << filename
-                << " failed to open. Metrics will not be written.\n";
-    } else {
-      metrics << "write_num,time (microsec)\n";
-    }
+  auto metrics{OpenMetricsFile(options_)};
+  if (metrics) {
+    metrics.value() << "write_num,write_time(microseconds)\n";
   }
 
   auto key_value_pairs{CreateRandomKeyValuePairs(
@@ -43,10 +35,10 @@ bool WriteRandomBenchmark::Run() {
     db.Put(pair.first, pair.second);
     auto end_single{std::chrono::high_resolution_clock::now()};
 
-    if (options_.write_metrics) {
+    if (options_.write_metrics && metrics) {
       auto diff{std::chrono::duration_cast<std::chrono::microseconds>(
           end_single - start_single)};
-      metrics << n << "," << diff.count() << '\n';
+      metrics.value() << n << "," << diff.count() << '\n';
       ++n;
     }
   }
