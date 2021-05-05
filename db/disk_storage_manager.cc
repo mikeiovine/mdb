@@ -113,10 +113,16 @@ size_t DiskStorageManager::TotalSize(int level) const {
 
 void DiskStorageManager::TriggerCompaction(int level, const Options& options) {
   Compact(level, options);
-  {
-    std::scoped_lock compaction_lk(compaction_mutex_);
-    ongoing_compaction_ = false;
-  }
+  std::scoped_lock compaction_lk(compaction_mutex_);
+  ongoing_compaction_ = false;
+
+  // Note that we do not unlock before notifying. This is due to a potential
+  // edge case when destroying this object. The following (admittedly unlikely)
+  // sequence of events would be possible if we released the mutex before
+  // notifying: 1) ongoing_compaction = false, compaction_mutex_ unlocked 2) The
+  // thread trying to destruct this DiskStorageManager spuriously wakes up. 3)
+  // compaction_cv_.notify_all() is called in this tread; but compaction_cv_ is
+  //    already destructed, so we get UB!
   compaction_cv_.notify_all();
 }
 
