@@ -18,8 +18,10 @@ std::string RandomString(size_t size);
 std::vector<std::pair<std::string, std::string>> CreateRandomKeyValuePairs(
     size_t num_entries, size_t key_size, size_t value_size);
 
-// Open a new metrics file. Print an error message if the file fails to open.
-std::optional<std::ofstream> OpenMetricsFile(const BenchmarkOptions& options);
+// Try to open a new metrics file if options.write_metrics == true.
+// Return nullopt if write_metrics == false or if the file failed to open.
+std::optional<std::ofstream> OpenMetricsFile(
+    const BenchmarkOptions& options, const std::string& metrics_filename);
 
 }  // namespace benchmark
 }  // namespace mdb

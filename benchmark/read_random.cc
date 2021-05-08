@@ -1,5 +1,3 @@
-#include <gflags/gflags.h>
-
 #include "benchmark_interface.h"
 #include "benchmark_util.h"
 #include "db.h"
@@ -7,21 +5,16 @@
 namespace mdb {
 namespace benchmark {
 
-DECLARE_uint32(num_entries);
-DECLARE_uint32(key_size);
-DECLARE_uint32(value_size);
-
 bool ReadRandomBenchmark::Run() {
   Options opt{.path = "./benchmark/db_files/read_random"};
   DB db(opt);
 
-  auto metrics{OpenMetricsFile(options_)};
+  auto metrics{OpenMetricsFile(options_, GetMetricsFilename())};
   if (metrics) {
     metrics.value() << "read_num,read_time(microseconds)\n";
   }
 
-  auto key_value_pairs{CreateRandomKeyValuePairs(
-      FLAGS_num_entries, FLAGS_key_size, FLAGS_value_size)};
+  auto key_value_pairs{CreateRandomKeyValuePairs(100, 16, 100)};
 
   for (const auto& pair : key_value_pairs) {
     db.Put(pair.first, pair.second);

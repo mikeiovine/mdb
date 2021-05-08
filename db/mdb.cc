@@ -1,5 +1,5 @@
-#include <gflags/gflags.h>
-
+#include <boost/program_options.hpp>
+#include <filesystem>
 #include <iostream>
 #include <string>
 
@@ -8,31 +8,36 @@
 
 using namespace mdb;
 
-DEFINE_bool(recovery, false,
-            "Start the database in recovery mode (use files existing in path "
-            "as a starting point");
+namespace po = boost::program_options;
 
-DEFINE_string(path, "./db_files/",
-              "Where to store the files that mdb will generate.");
+using PathT = std::filesystem::path;
 
-int main(int argc, char *argv[]) {
-  gflags::ParseCommandLineFlags(&argc, &argv, true);
+int main(int argc, char* argv[]) {
+  po::options_description desc{"Usage"};
+  desc.add_options()("help", "Show this help message")(
+      "path", po::value<PathT>()->default_value("./db_files"),
+      "Where to store the files that MDB will generate.");
 
-  Options opt{.path = FLAGS_path};
+  po::variables_map vm;
+
+  try {
+    po::store(po::parse_command_line(argc, argv, desc), vm);
+    po::notify(vm);
+  } catch (const std::exception& e) {
+    std::cerr << "Error: " << e.what() << '\n';
+    return 1;
+  }
+
+  if (vm.count("help")) {
+    std::cout << desc << '\n';
+    return 1;
+  }
+
+  PathT path{std::filesystem::canonical(vm["path"].as<PathT>())};
+  std::cout << "Writing files to " << path << '\n';
+
+  Options opt{.path = path};
   DB db(opt);
 
-  for (long i = 0; i < 1500000; i++) {
-    auto key{"hello" + std::to_string(i)};
-    db.Put(key, "world");
-    if (i >= 1000) {
-      db.Delete("hello" + std::to_string(i - 1000));
-    }
-  }
-
-  db.WaitForOngoingCompactions();
-  std::cout << "finished, running assertions" << std::endl;
-
-  for (long i = 0; i < 1000000; i++) {
-    assert(db.Get("hello" + std::to_string(i)) == "");
-  }
+  return 0;
 }

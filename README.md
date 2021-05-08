@@ -8,7 +8,7 @@ This is still a work-in-progress.
 
 ## Dependencies
 
-* [gflags](https://github.com/gflags/gflags)
+* [boost](https://www.boost.org/)
 * [googletest](https://github.com/google/googletest) [testing only]
 
 This project will only compile on POSIX compliant operating systems.

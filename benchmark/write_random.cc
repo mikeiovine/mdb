@@ -1,5 +1,3 @@
-#include <gflags/gflags.h>
-
 #include <fstream>
 #include <iostream>
 #include <set>
@@ -11,22 +9,17 @@
 namespace mdb {
 namespace benchmark {
 
-DECLARE_uint32(num_entries);
-DECLARE_uint32(key_size);
-DECLARE_uint32(value_size);
-
 bool WriteRandomBenchmark::Run() {
   // TODO make this directory automatically
   Options opt{.path = "./benchmark/db_files/write_random"};
   DB db(opt);
 
-  auto metrics{OpenMetricsFile(options_)};
+  auto metrics{OpenMetricsFile(options_, GetMetricsFilename())};
   if (metrics) {
     metrics.value() << "write_num,write_time(microseconds)\n";
   }
 
-  auto key_value_pairs{CreateRandomKeyValuePairs(
-      FLAGS_num_entries, FLAGS_key_size, FLAGS_value_size)};
+  auto key_value_pairs{CreateRandomKeyValuePairs(100, 16, 100)};
 
   auto start{std::chrono::high_resolution_clock::now()};
   int n{1};

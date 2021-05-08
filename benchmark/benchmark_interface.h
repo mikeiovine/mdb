@@ -21,7 +21,6 @@ struct BenchmarkOptions {
   // influence the performance of some benchmarks (since collecting the metrics
   // is extra overhead).
   bool write_metrics{false};
-  std::string metrics_filename{"metrics"};
   std::filesystem::path metrics_path{"./metrics"};
 
   // If true, check that the results the DB is producing is actually correct.
@@ -31,6 +30,12 @@ struct BenchmarkOptions {
   // be used for debugging/development only. Verification time is NOT included
   // in the benchmark runtime stats.
   bool verify_results{false};
+
+  int64_t key_size{0};
+
+  int64_t value_size{0};
+
+  int64_t num_entries{0};
 };
 
 class Benchmark {
@@ -51,6 +56,9 @@ class Benchmark {
   // Get the stats from the last run
   BenchmarkStats GetStats() const noexcept { return stats_; }
 
+  // Get the name of the file to write metrics to
+  virtual std::string GetMetricsFilename() const = 0;
+
  protected:
   BenchmarkStats stats_;
   BenchmarkOptions options_;
@@ -61,12 +69,9 @@ class WriteRandomBenchmark : public Benchmark {
   WriteRandomBenchmark(BenchmarkOptions options)
       : Benchmark(std::move(options)) {}
 
-  // Default options for this benchmark
-  static BenchmarkOptions GetBenchmarkOptions() {
-    return {.write_metrics = true, .metrics_filename = "write_random_metrics"};
-  }
-
   bool Run() override;
+
+  std::string GetMetricsFilename() const override { return "write_random.csv"; }
 };
 
 class ReadRandomBenchmark : public Benchmark {
@@ -74,11 +79,9 @@ class ReadRandomBenchmark : public Benchmark {
   ReadRandomBenchmark(BenchmarkOptions options)
       : Benchmark(std::move(options)) {}
 
-  static BenchmarkOptions GetBenchmarkOptions() {
-    return {.write_metrics = true, .metrics_filename = "read_random_metrics"};
-  }
-
   bool Run() override;
+
+  std::string GetMetricsFilename() const override { return "read_random.csv"; }
 };
 
 }  // namespace benchmark

@@ -31,11 +31,11 @@ std::vector<std::pair<std::string, std::string>> CreateRandomKeyValuePairs(
   return key_values;
 }
 
-std::optional<std::ofstream> OpenMetricsFile(const BenchmarkOptions& options) {
-  auto filename{options.metrics_path / (options.metrics_filename + ".csv")};
-  std::ofstream metrics{filename};
-
+std::optional<std::ofstream> OpenMetricsFile(
+    const BenchmarkOptions& options, const std::string& metrics_filename) {
   if (options.write_metrics) {
+    auto filename{options.metrics_path / metrics_filename};
+    std::ofstream metrics{filename};
     if (!metrics.is_open()) {
       std::cerr << "WARNING: write_metrics is set to true, but the file "
                 << filename
@@ -43,9 +43,11 @@ std::optional<std::ofstream> OpenMetricsFile(const BenchmarkOptions& options) {
 
       return std::nullopt;
     }
+
+    return metrics;
   }
 
-  return metrics;
+  return std::nullopt;
 }
 
 }  // namespace benchmark

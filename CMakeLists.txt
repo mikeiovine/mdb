@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.10)
 
 project(mdb)
 
+include(FetchContent)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_CXX_FLAGS "-Wall -Wextra -O3")
@@ -20,37 +21,35 @@ add_library(
     db/db.cc
 )
 
-add_executable(
-    mdb 
-    db/mdb.cc
-)
+find_package(Boost REQUIRED COMPONENTS program_options)
+if(Boost_FOUND)
+    add_executable(
+        mdb 
+        db/mdb.cc
+    )
+    target_include_directories(mdb PRIVATE ${Boost_INCLUDE_DIRS})
+    target_link_libraries(
+        mdb
+        mdb_lib
+        Boost::program_options
+    )
 
-include(FetchContent)
-FetchContent_Declare(
-  gflags
-  URL https://github.com/gflags/gflags/archive/master.zip
-)
-FetchContent_MakeAvailable(gflags)
+    add_executable(
+        mdb_bench
+        benchmark/run_benchmarks.cc
+        benchmark/write_random.cc
+        benchmark/read_random.cc
+        benchmark/benchmark_util.cc
+    )
+    target_include_directories(mdb_bench PRIVATE ${Boost_INCLUDE_DIRS})
+    target_link_libraries(
+        mdb_bench
+        mdb_lib
+        Boost::program_options
+    )
+endif()
 
-target_link_libraries(
-    mdb
-    mdb_lib
-    gflags
-)
 
-add_executable(
-    mdb_bench
-    benchmark/run_benchmarks.cc
-    benchmark/write_random.cc
-    benchmark/read_random.cc
-    benchmark/benchmark_util.cc
-)
-
-target_link_libraries(
-    mdb_bench
-    mdb_lib
-    gflags
-)
 
 FetchContent_Declare(
   googletest
