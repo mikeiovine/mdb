@@ -9,30 +9,30 @@ using namespace mdb;
 BOOST_AUTO_TEST_SUITE(TestLogWriter)
 
 void CompareKvToOutput(
-    const std::vector<char>& write_dest,
-    const std::vector<std::pair<std::string, std::string>>& pairs) {
+    const std::vector<char> &write_dest,
+    const std::vector<std::pair<std::string, std::string>> &pairs) {
   size_t cur{0};
-  for (const auto& kv : pairs) {
-    BOOST_REQUIRE(write_dest.size() - cur >= sizeof(size_t));
+  for (const auto &kv : pairs) {
+    BOOST_TEST_REQUIRE(write_dest.size() - cur >= sizeof(size_t));
 
     size_t key_size{ReadSizeT(write_dest, cur)};
     cur += sizeof(size_t);
 
     BOOST_REQUIRE_EQUAL(key_size, kv.first.size());
 
-    BOOST_REQUIRE(write_dest.size() - cur >= key_size);
+    BOOST_TEST_REQUIRE(write_dest.size() - cur >= key_size);
     std::string key{ReadString(write_dest, cur, key_size)};
     cur += key.size();
 
     BOOST_REQUIRE_EQUAL(key, kv.first);
 
-    BOOST_REQUIRE(write_dest.size() - cur >= sizeof(size_t));
+    BOOST_TEST_REQUIRE(write_dest.size() - cur >= sizeof(size_t));
     size_t value_size{ReadSizeT(write_dest, cur)};
     cur += sizeof(size_t);
 
     BOOST_REQUIRE_EQUAL(value_size, kv.second.size());
 
-    BOOST_REQUIRE(write_dest.size() - cur >= value_size);
+    BOOST_TEST_REQUIRE(write_dest.size() - cur >= value_size);
     std::string value{ReadString(write_dest, cur, value_size)};
     cur += value.size();
 
@@ -56,7 +56,7 @@ BOOST_AUTO_TEST_CASE(TestLogfileFormatNoDeletes) {
       {"another_key", "hello_world"},
       {"yet_another_key", "value"}};
 
-  for (const auto& kv : pairs) {
+  for (const auto &kv : pairs) {
     log.Add(kv.first, kv.second);
   }
 
@@ -81,7 +81,7 @@ BOOST_AUTO_TEST_CASE(TestLogfileFormatWithDeletes) {
       {"hello_world", ""},
       {"abc", "someveryveryverylongvalueabcdefgjhi123456789"}};
 
-  for (const auto& kv : pairs) {
+  for (const auto &kv : pairs) {
     log.Add(kv.first, kv.second);
   }
 
@@ -101,7 +101,7 @@ BOOST_AUTO_TEST_CASE(TestLogfileFormatManySmallRecords) {
 
   std::vector<std::pair<std::string, std::string>> pairs(10000, {"ab", "c"});
 
-  for (const auto& kv : pairs) {
+  for (const auto &kv : pairs) {
     log.Add(kv.first, kv.second);
   }
 
@@ -130,7 +130,7 @@ BOOST_AUTO_TEST_CASE(TestLogfileAutoSync) {
       {"helloworld", "another_value"}};
 
   int i{1};
-  for (const auto& kv : pairs) {
+  for (const auto &kv : pairs) {
     log.Add(kv.first, kv.second);
     BOOST_REQUIRE_EQUAL(num_syncs, i);
     i += 1;

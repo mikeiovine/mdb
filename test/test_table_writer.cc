@@ -17,11 +17,11 @@ using MemTableOrderedT = std::vector<std::pair<std::string, std::string>>;
  * Assert that the number of blocks in the buffer is correct.
  * The buffer is assumed to be in the "uncompressed" format.
  */
-void CheckNumBlocksUncompressed(const std::vector<char>& output, int expected) {
+void CheckNumBlocksUncompressed(const std::vector<char> &output, int expected) {
   int n{0};
   size_t pos{0};
   while (pos < output.size()) {
-    BOOST_REQUIRE(output.size() - pos >= sizeof(size_t));
+    BOOST_TEST_REQUIRE(output.size() - pos >= sizeof(size_t));
     pos += ReadSizeT(output, pos) + sizeof(size_t);
     n += 1;
   }
@@ -31,23 +31,23 @@ void CheckNumBlocksUncompressed(const std::vector<char>& output, int expected) {
 /**
  * Read the uncompressed block starting at "pos"
  */
-void ReadUncompressedBlock(const std::vector<char>& buf, size_t pos,
-                           size_t block_size, MemTableOrderedT& output) {
+void ReadUncompressedBlock(const std::vector<char> &buf, size_t pos,
+                           size_t block_size, MemTableOrderedT &output) {
   size_t i{0};
   while (i < block_size) {
-    BOOST_REQUIRE(buf.size() - (pos + i) >= sizeof(size_t));
+    BOOST_TEST_REQUIRE(buf.size() - (pos + i) >= sizeof(size_t));
     size_t key_size{ReadSizeT(buf, pos + i)};
     i += sizeof(size_t);
 
-    BOOST_REQUIRE(buf.size() - (pos + i) >= key_size);
+    BOOST_TEST_REQUIRE(buf.size() - (pos + i) >= key_size);
     std::string key{ReadString(buf, pos + i, key_size)};
     i += key_size;
 
-    BOOST_REQUIRE(buf.size() - (pos + i) >= sizeof(size_t));
+    BOOST_TEST_REQUIRE(buf.size() - (pos + i) >= sizeof(size_t));
     size_t value_size{ReadSizeT(buf, pos + i)};
     i += sizeof(size_t);
 
-    BOOST_REQUIRE(buf.size() - (pos + i) >= value_size);
+    BOOST_TEST_REQUIRE(buf.size() - (pos + i) >= value_size);
     std::string value{ReadString(buf, pos + i, value_size)};
     i += value_size;
 
@@ -60,24 +60,24 @@ void ReadUncompressedBlock(const std::vector<char>& buf, size_t pos,
 /**
  * Verify that an uncompressed output is formatted correctly.
  */
-void CompareUncompressedOutput(const std::vector<char>& buf,
-                               const MemTableOrderedT& expected) {
+void CompareUncompressedOutput(const std::vector<char> &buf,
+                               const MemTableOrderedT &expected) {
   size_t pos{0};
 
   MemTableOrderedT res;
 
   while (pos < buf.size()) {
-    BOOST_REQUIRE(buf.size() - pos >= sizeof(size_t));
+    BOOST_TEST_REQUIRE(buf.size() - pos >= sizeof(size_t));
 
     size_t block_size{ReadSizeT(buf, pos)};
     pos += sizeof(size_t);
 
-    BOOST_REQUIRE(buf.size() - pos >= block_size);
+    BOOST_TEST_REQUIRE(buf.size() - pos >= block_size);
     ReadUncompressedBlock(buf, pos, block_size, res);
     pos += block_size;
   }
 
-  BOOST_REQUIRE(res == expected);
+  BOOST_TEST_REQUIRE(res == expected, boost::test_tools::per_element());
 }
 
 /**
@@ -167,7 +167,8 @@ BOOST_AUTO_TEST_CASE(TestIndex) {
       {"4", second_block_size + first_block_size + 2 * sizeof(size_t)}};
 
   writer.WriteMemtable(to_write);
-  BOOST_REQUIRE(expected == writer.GetIndex());
+  BOOST_TEST_REQUIRE(expected == writer.GetIndex(),
+                     boost::test_tools::per_element());
 }
 
 /**

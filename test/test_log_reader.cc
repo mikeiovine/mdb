@@ -14,14 +14,14 @@ namespace {
 
 using SequenceT = std::vector<std::pair<std::string, std::string>>;
 
-size_t PairSize(const std::pair<std::string, std::string>& pair) {
+size_t PairSize(const std::pair<std::string, std::string> &pair) {
   return pair.first.size() + pair.second.size();
 }
 
-std::vector<char> ConstructInput(const SequenceT& seq) {
+std::vector<char> ConstructInput(const SequenceT &seq) {
   std::vector<char> buf;
 
-  for (auto& kv : seq) {
+  for (auto &kv : seq) {
     WriteSizeT(buf, kv.first.size());
     WriteString(buf, kv.first);
 
@@ -55,7 +55,7 @@ BOOST_AUTO_TEST_CASE(TestLogReaderNoDeletes) {
   MemTableT expected{
       {"abc", "overwritten_key"}, {"xyz", "nop"}, {"hello", "world"}};
 
-  BOOST_REQUIRE(expected == memtable);
+  BOOST_TEST_REQUIRE(expected == memtable, boost::test_tools::per_element());
 }
 
 /**
@@ -77,7 +77,7 @@ BOOST_AUTO_TEST_CASE(TestLogReaderWithDeletes) {
 
   MemTableT expected{{"abc", "def"}};
 
-  BOOST_REQUIRE(expected == memtable);
+  BOOST_TEST_REQUIRE(expected == memtable, boost::test_tools::per_element());
 }
 
 /**
@@ -103,7 +103,7 @@ BOOST_AUTO_TEST_CASE(TestLogReaderCorruptionHugeKeySize) {
 
   size_t corrupted_size{input.size() - insert_at + 1};
 
-  *reinterpret_cast<size_t*>(input.data() + insert_at) = corrupted_size;
+  *reinterpret_cast<size_t *>(input.data() + insert_at) = corrupted_size;
   auto io{std::make_unique<ReadOnlyIOMock>(std::move(input))};
 
   LogReader reader{std::move(io)};
@@ -111,7 +111,7 @@ BOOST_AUTO_TEST_CASE(TestLogReaderCorruptionHugeKeySize) {
   MemTableT memtable{reader.ReadMemTable()};
   MemTableT expected{{"abc", "def"}, {"notdeleted", "val"}};
 
-  BOOST_REQUIRE(expected == memtable);
+  BOOST_TEST_REQUIRE(expected == memtable, boost::test_tools::per_element());
 }
 
 /**
@@ -132,7 +132,7 @@ BOOST_AUTO_TEST_CASE(TestLogReaderCorruptionHugeValueSize) {
 
   size_t corrupted_size{input.size() - insert_at + 1};
 
-  *reinterpret_cast<size_t*>(input.data() + insert_at) = corrupted_size;
+  *reinterpret_cast<size_t *>(input.data() + insert_at) = corrupted_size;
   auto io{std::make_unique<ReadOnlyIOMock>(std::move(input))};
 
   LogReader reader{std::move(io)};
@@ -140,7 +140,7 @@ BOOST_AUTO_TEST_CASE(TestLogReaderCorruptionHugeValueSize) {
   MemTableT memtable{reader.ReadMemTable()};
   MemTableT expected{{"abc", "def"}, {"notdeleted", "val"}};
 
-  BOOST_REQUIRE(expected == memtable);
+  BOOST_TEST_REQUIRE(expected == memtable, boost::test_tools::per_element());
 }
 
 /**
@@ -160,7 +160,7 @@ BOOST_AUTO_TEST_CASE(TestLogReaderCorruptionKeyWithNoValue) {
   MemTableT memtable{reader.ReadMemTable()};
   MemTableT expected{{"abc", "def"}};
 
-  BOOST_REQUIRE(expected == memtable);
+  BOOST_TEST_REQUIRE(expected == memtable, boost::test_tools::per_element());
 }
 
 BOOST_AUTO_TEST_SUITE_END()

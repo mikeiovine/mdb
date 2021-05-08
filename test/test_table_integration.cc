@@ -27,7 +27,7 @@ BOOST_AUTO_TEST_CASE(TestUncompressedTableIntegration) {
   auto io_read{std::make_unique<ReadOnlyIOMock>(std::move(output))};
   UncompressedTableReader reader{std::move(io_read), writer.GetIndex()};
 
-  for (const auto& pair : memtable) {
+  for (const auto &pair : memtable) {
     BOOST_REQUIRE(reader.ValueOf(pair.first) == pair.second);
   }
 

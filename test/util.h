@@ -8,32 +8,52 @@
 #include "options.h"
 #include "table_factory.h"
 
-inline size_t ReadSizeT(const std::vector<char>& data, size_t offset) {
-  const char* buf = data.data() + offset;
-  return *reinterpret_cast<const size_t*>(buf);
+// A hack to print std::pair in boost unit test macros until
+// they add this specialization.
+namespace boost {
+namespace test_tools {
+namespace tt_detail {
+
+template <class T>
+struct print_log_value;
+
+template <class K, class V>
+struct print_log_value<std::pair<K, V>> {
+  void operator()(std::ostream &os, std::pair<K, V> kv) {
+    os << "{" << kv.first << ", " << kv.second << "}";
+  }
+};
+
+}  // namespace tt_detail
+}  // namespace test_tools
+}  // namespace boost
+
+inline size_t ReadSizeT(const std::vector<char> &data, size_t offset) {
+  const char *buf = data.data() + offset;
+  return *reinterpret_cast<const size_t *>(buf);
 }
 
-inline std::string ReadString(const std::vector<char>& data, size_t offset,
+inline std::string ReadString(const std::vector<char> &data, size_t offset,
                               size_t num_bytes) {
-  const char* buf = data.data() + offset;
+  const char *buf = data.data() + offset;
   return std::string(buf, buf + num_bytes);
 }
 
-inline void WriteSizeT(std::vector<char>& buf, size_t size) {
-  char* size_ptr{reinterpret_cast<char*>(&size)};
+inline void WriteSizeT(std::vector<char> &buf, size_t size) {
+  char *size_ptr{reinterpret_cast<char *>(&size)};
   buf.insert(buf.end(), size_ptr, size_ptr + sizeof(size_t));
 }
 
-inline void WriteString(std::vector<char>& buf, const std::string& str) {
+inline void WriteString(std::vector<char> &buf, const std::string &str) {
   buf.insert(buf.end(), str.cbegin(), str.cend());
 }
 
 class WriteOnlyIOMock : public mdb::WriteOnlyIO {
  public:
-  WriteOnlyIOMock(std::vector<char>& output, std::string filename = "")
+  WriteOnlyIOMock(std::vector<char> &output, std::string filename = "")
       : filename_{std::move(filename)}, record_{output} {}
 
-  void Write(const char* data, size_t size) override {
+  void Write(const char *data, size_t size) override {
     if (!closed_) {
       record_.insert(record_.end(), data, data + size);
     }
@@ -41,7 +61,7 @@ class WriteOnlyIOMock : public mdb::WriteOnlyIO {
 
   void Sync() override {
     if (!closed_) {
-      for (const auto& func : on_sync_) {
+      for (const auto &func : on_sync_) {
         func();
       }
     }
@@ -58,7 +78,7 @@ class WriteOnlyIOMock : public mdb::WriteOnlyIO {
  private:
   bool closed_{false};
   std::string filename_;
-  std::vector<char>& record_;
+  std::vector<char> &record_;
   std::vector<std::function<void(void)>> on_sync_;
 };
 
@@ -67,7 +87,7 @@ class ReadOnlyIOMock : public mdb::ReadOnlyIO {
   ReadOnlyIOMock(std::vector<char> input, std::string filename = "")
       : input_{std::move(input)}, filename_{std::move(filename)} {}
 
-  size_t Read(char* output, size_t size, size_t offset) override {
+  size_t Read(char *output, size_t size, size_t offset) override {
     assert(offset <= input_.size());
     if (!closed_) {
       size_t read_size = std::min(input_.size() - offset, size);
@@ -111,7 +131,7 @@ class EnvMock : public mdb::Env {
                                             std::move(filename));
   }
 
-  void RemoveFile(const std::string& filename) override {
+  void RemoveFile(const std::string &filename) override {
     assert(files.erase(filename));
   }
 

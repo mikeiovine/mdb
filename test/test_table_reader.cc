@@ -12,11 +12,11 @@ struct BlockT {
   std::vector<char> data;
 };
 
-BlockT ConstructBlock(const std::map<std::string, std::string>& pairs) {
+BlockT ConstructBlock(const std::map<std::string, std::string> &pairs) {
   BlockT block;
   WriteSizeT(block.data, 0);
 
-  for (const auto& kv : pairs) {
+  for (const auto &kv : pairs) {
     WriteSizeT(block.data, kv.first.size());
     WriteString(block.data, kv.first);
 
@@ -25,7 +25,7 @@ BlockT ConstructBlock(const std::map<std::string, std::string>& pairs) {
   }
 
   block.size = block.data.size() - sizeof(size_t);
-  *reinterpret_cast<size_t*>(block.data.data()) = block.size;
+  *reinterpret_cast<size_t *>(block.data.data()) = block.size;
 
   return block;
 }
@@ -33,14 +33,14 @@ BlockT ConstructBlock(const std::map<std::string, std::string>& pairs) {
 std::vector<char> ConstructTable(const std::vector<BlockT> blocks) {
   std::vector<char> res;
 
-  for (const auto& block : blocks) {
+  for (const auto &block : blocks) {
     res.insert(res.end(), block.data.cbegin(), block.data.cend());
   }
 
   return res;
 }
 
-IndexT ConstructIndex(const std::vector<char>& buf) {
+IndexT ConstructIndex(const std::vector<char> &buf) {
   size_t pos{0};
   IndexT idx;
 
@@ -66,7 +66,7 @@ BOOST_AUTO_TEST_CASE(TestTableReaderFindsCorrectKeys) {
       {{"xyz", "hello"}}};
 
   std::vector<BlockT> blocks;
-  for (const auto& kv_map : key_values) {
+  for (const auto &kv_map : key_values) {
     blocks.push_back(ConstructBlock(kv_map));
   }
 
@@ -77,10 +77,10 @@ BOOST_AUTO_TEST_CASE(TestTableReaderFindsCorrectKeys) {
 
   auto reader{UncompressedTableReader(std::move(io), std::move(index))};
 
-  for (const auto& kv_map : key_values) {
-    for (const auto& kv : kv_map) {
-      const auto& key{kv.first};
-      const auto& value{kv.second};
+  for (const auto &kv_map : key_values) {
+    for (const auto &kv : kv_map) {
+      const auto &key{kv.first};
+      const auto &value{kv.second};
 
       BOOST_REQUIRE(reader.ValueOf(key) == value);
     }
@@ -94,7 +94,7 @@ BOOST_AUTO_TEST_CASE(TestTableReaderIterCorrectOrder) {
       {{"xyz", "hello"}}};
 
   std::vector<BlockT> blocks;
-  for (const auto& kv_map : key_values) {
+  for (const auto &kv_map : key_values) {
     blocks.push_back(ConstructBlock(kv_map));
   }
 
@@ -107,10 +107,10 @@ BOOST_AUTO_TEST_CASE(TestTableReaderIterCorrectOrder) {
 
   auto it{reader.Begin()};
 
-  for (const auto& kv_map : key_values) {
-    for (const auto& kv : kv_map) {
-      const auto& key{kv.first};
-      const auto& value{kv.second};
+  for (const auto &kv_map : key_values) {
+    for (const auto &kv : kv_map) {
+      const auto &key{kv.first};
+      const auto &value{kv.second};
 
       BOOST_REQUIRE_EQUAL(it->first, key);
       BOOST_REQUIRE_EQUAL(it->second, value);
@@ -126,7 +126,7 @@ BOOST_AUTO_TEST_CASE(TestTableIterEq) {
       {{"xyz", "hello"}}};
 
   std::vector<BlockT> blocks;
-  for (const auto& kv_map : key_values) {
+  for (const auto &kv_map : key_values) {
     blocks.push_back(ConstructBlock(kv_map));
   }
 
@@ -166,7 +166,7 @@ BOOST_AUTO_TEST_CASE(TestTableIterSTL) {
       {{"abc", "def"}, {"a", "helloworld"}, {"xyz", "abc"}}};
 
   std::vector<BlockT> blocks;
-  for (const auto& kv_map : key_values) {
+  for (const auto &kv_map : key_values) {
     blocks.push_back(ConstructBlock(kv_map));
   }
 
@@ -198,7 +198,7 @@ BOOST_AUTO_TEST_CASE(TestTableIterIncAndDeref) {
       {{"abc", "def"}, {"a", "helloworld"}}};
 
   std::vector<BlockT> blocks;
-  for (const auto& kv_map : key_values) {
+  for (const auto &kv_map : key_values) {
     blocks.push_back(ConstructBlock(kv_map));
   }
 
@@ -233,14 +233,14 @@ BOOST_AUTO_TEST_CASE(TestTableCorruptionHugeBlockSize) {
       {{"abc", "def"}, {"a", "helloworld"}}};
 
   std::vector<BlockT> blocks;
-  for (const auto& kv_map : key_values) {
+  for (const auto &kv_map : key_values) {
     blocks.push_back(ConstructBlock(kv_map));
   }
 
   std::vector<char> buf{ConstructTable(blocks)};
 
   auto index{ConstructIndex(buf)};
-  *reinterpret_cast<size_t*>(buf.data()) = 100000000000000;
+  *reinterpret_cast<size_t *>(buf.data()) = 100000000000000;
   auto io{std::make_unique<ReadOnlyIOMock>(std::move(buf))};
 
   auto reader{UncompressedTableReader(std::move(io), std::move(index))};
@@ -253,14 +253,14 @@ BOOST_AUTO_TEST_CASE(TestTableCorruptionHugeKeySize) {
       {{"abc", "def"}, {"a", "helloworld"}}};
 
   std::vector<BlockT> blocks;
-  for (const auto& kv_map : key_values) {
+  for (const auto &kv_map : key_values) {
     blocks.push_back(ConstructBlock(kv_map));
   }
 
   std::vector<char> buf{ConstructTable(blocks)};
 
   auto index{ConstructIndex(buf)};
-  *reinterpret_cast<size_t*>(buf.data() + sizeof(size_t)) = 10000;
+  *reinterpret_cast<size_t *>(buf.data() + sizeof(size_t)) = 10000;
   auto io{std::make_unique<ReadOnlyIOMock>(std::move(buf))};
 
   auto reader{UncompressedTableReader(std::move(io), std::move(index))};
@@ -273,14 +273,14 @@ BOOST_AUTO_TEST_CASE(TestTableCorruptionHugeValueSize) {
       {{"abc", "def"}, {"a", "helloworld"}}};
 
   std::vector<BlockT> blocks;
-  for (const auto& kv_map : key_values) {
+  for (const auto &kv_map : key_values) {
     blocks.push_back(ConstructBlock(kv_map));
   }
 
   std::vector<char> buf{ConstructTable(blocks)};
 
   auto index{ConstructIndex(buf)};
-  *reinterpret_cast<size_t*>(buf.data() + 2 * sizeof(size_t) + sizeof("abc")) =
+  *reinterpret_cast<size_t *>(buf.data() + 2 * sizeof(size_t) + sizeof("abc")) =
       100000000000000;
   auto io{std::make_unique<ReadOnlyIOMock>(std::move(buf))};
 
@@ -300,7 +300,7 @@ BOOST_AUTO_TEST_CASE(TestDeletedValuesAreEmpty) {
       {{"abc", ""}, {"a", ""}}, {{"xyz", ""}}};
 
   std::vector<BlockT> blocks;
-  for (const auto& kv_map : key_values) {
+  for (const auto &kv_map : key_values) {
     blocks.push_back(ConstructBlock(kv_map));
   }
 
@@ -311,10 +311,10 @@ BOOST_AUTO_TEST_CASE(TestDeletedValuesAreEmpty) {
 
   auto reader{UncompressedTableReader(std::move(io), std::move(index))};
 
-  for (const auto& kv_map : key_values) {
-    for (const auto& kv : kv_map) {
-      const auto& key{kv.first};
-      const auto& value{kv.second};
+  for (const auto &kv_map : key_values) {
+    for (const auto &kv : kv_map) {
+      const auto &key{kv.first};
+      const auto &value{kv.second};
 
       BOOST_REQUIRE(reader.ValueOf(key) == value);
     }
@@ -332,7 +332,7 @@ BOOST_AUTO_TEST_CASE(TestNonexistantValuesAreNullopt) {
       {{"ba", ""}, {"bb", ""}}, {{"xyz", ""}}};
 
   std::vector<BlockT> blocks;
-  for (const auto& kv_map : key_values) {
+  for (const auto &kv_map : key_values) {
     blocks.push_back(ConstructBlock(kv_map));
   }
 

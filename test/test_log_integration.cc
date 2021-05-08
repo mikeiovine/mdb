@@ -20,7 +20,7 @@ BOOST_AUTO_TEST_CASE(TestLogReaderReadsLogWriterOutput) {
   std::vector<std::pair<std::string, std::string>> kv{
       {"a", "b"}, {"c", "d"}, {"key", "value"}};
 
-  for (const auto& pair : kv) {
+  for (const auto &pair : kv) {
     writer.Add(pair.first, pair.second);
   }
   writer.FlushBuffer();
@@ -30,7 +30,7 @@ BOOST_AUTO_TEST_CASE(TestLogReaderReadsLogWriterOutput) {
 
   MemTableT memtable{reader.ReadMemTable()};
 
-  for (const auto& pair : kv) {
+  for (const auto &pair : kv) {
     auto it{memtable.find(pair.first)};
     BOOST_REQUIRE(it != memtable.end());
     BOOST_REQUIRE_EQUAL(it->second, pair.second);
