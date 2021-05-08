@@ -1,10 +1,10 @@
-#include <boost/test/unit_test.hpp>
 #include <cmath>
 #include <iostream>
 #include <map>
 #include <string>
 
 #include "table_writer.h"
+#include "unit_test_include.h"
 #include "util.h"
 
 using namespace mdb;

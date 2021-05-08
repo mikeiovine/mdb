@@ -8,26 +8,6 @@
 #include "options.h"
 #include "table_factory.h"
 
-// A hack to print std::pair in boost unit test macros until
-// they add this specialization.
-namespace boost {
-namespace test_tools {
-namespace tt_detail {
-
-template <class T>
-struct print_log_value;
-
-template <class K, class V>
-struct print_log_value<std::pair<K, V>> {
-  void operator()(std::ostream &os, std::pair<K, V> kv) {
-    os << "{" << kv.first << ", " << kv.second << "}";
-  }
-};
-
-}  // namespace tt_detail
-}  // namespace test_tools
-}  // namespace boost
-
 inline size_t ReadSizeT(const std::vector<char> &data, size_t offset) {
   const char *buf = data.data() + offset;
   return *reinterpret_cast<const size_t *>(buf);

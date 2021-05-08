@@ -1,9 +1,9 @@
-#include <boost/test/unit_test.hpp>
 #include <limits>
 #include <map>
 #include <vector>
 
 #include "log_reader.h"
+#include "unit_test_include.h"
 #include "util.h"
 
 using namespace mdb;

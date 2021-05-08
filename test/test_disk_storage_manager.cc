@@ -1,6 +1,5 @@
-#include <boost/test/unit_test.hpp>
-
 #include "disk_storage_manager.h"
+#include "unit_test_include.h"
 #include "util.h"
 
 using namespace mdb;

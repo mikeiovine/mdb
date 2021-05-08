@@ -1,7 +1,6 @@
-#include <boost/test/unit_test.hpp>
-
 #include "log_reader.h"
 #include "log_writer.h"
+#include "unit_test_include.h"
 #include "util.h"
 
 using namespace mdb;
