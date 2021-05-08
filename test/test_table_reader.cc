@@ -1,9 +1,11 @@
-#include <gtest/gtest.h>
+#include <boost/test/unit_test.hpp>
 
 #include "table_reader.h"
 #include "util.h"
 
 using namespace mdb;
+
+BOOST_AUTO_TEST_SUITE(TestTableReader)
 
 struct BlockT {
   size_t size;
@@ -57,7 +59,7 @@ IndexT ConstructIndex(const std::vector<char>& buf) {
   return idx;
 }
 
-TEST(TestUncompressedTableReader, TestTableReaderFindsCorrectKeys) {
+BOOST_AUTO_TEST_CASE(TestTableReaderFindsCorrectKeys) {
   std::vector<std::map<std::string, std::string>> key_values{
       {{"abc", "def"}, {"a", "helloworld"}},
       {{"b12", "123451251512"}, {"bbb", "bbbbbbbbbbbbbbbbbbb"}},
@@ -80,12 +82,12 @@ TEST(TestUncompressedTableReader, TestTableReaderFindsCorrectKeys) {
       const auto& key{kv.first};
       const auto& value{kv.second};
 
-      ASSERT_EQ(reader.ValueOf(key), value);
+      BOOST_REQUIRE(reader.ValueOf(key) == value);
     }
   }
 }
 
-TEST(TestUncompressedTableReader, TestTableReaderIterCorrectOrder) {
+BOOST_AUTO_TEST_CASE(TestTableReaderIterCorrectOrder) {
   std::vector<std::map<std::string, std::string>> key_values{
       {{"abc", "def"}, {"a", "helloworld"}},
       {{"b12", "123451251512"}, {"bbb", "bbbbbbbbbbbbbbbbbbb"}},
@@ -110,14 +112,14 @@ TEST(TestUncompressedTableReader, TestTableReaderIterCorrectOrder) {
       const auto& key{kv.first};
       const auto& value{kv.second};
 
-      ASSERT_EQ(it->first, key);
-      ASSERT_EQ(it->second, value);
+      BOOST_REQUIRE_EQUAL(it->first, key);
+      BOOST_REQUIRE_EQUAL(it->second, value);
       ++it;
     }
   }
 }
 
-TEST(TestUncompressedTableReader, TestTableIterEq) {
+BOOST_AUTO_TEST_CASE(TestTableIterEq) {
   std::vector<std::map<std::string, std::string>> key_values{
       {{"abc", "def"}, {"a", "helloworld"}},
       {{"b12", "123451251512"}, {"bbb", "bbbbbbbbbbbbbbbbbbb"}},
@@ -138,28 +140,28 @@ TEST(TestUncompressedTableReader, TestTableIterEq) {
   auto it1{reader.Begin()};
   auto it2{reader.Begin()};
 
-  ASSERT_EQ(it1, it2);
+  BOOST_REQUIRE(it1 == it2);
   it2++;
 
-  ASSERT_NE(it1, it2);
+  BOOST_REQUIRE(it1 != it2);
   it1++;
 
-  ASSERT_EQ(it1, it2);
+  BOOST_REQUIRE(it1 == it2);
 
-  ASSERT_EQ(reader.End(), reader.End());
-  ASSERT_NE(reader.Begin(), reader.End());
+  BOOST_REQUIRE(reader.End() == reader.End());
+  BOOST_REQUIRE(reader.Begin() != reader.End());
 }
 
-TEST(TestUncompressedTableReader, TestTableIterEmpty) {
+BOOST_AUTO_TEST_CASE(TestTableIterEmpty) {
   std::vector<char> buf;
   auto index{ConstructIndex(buf)};
   auto io{std::make_unique<ReadOnlyIOMock>(std::move(buf))};
 
   auto reader{UncompressedTableReader(std::move(io), std::move(index))};
-  ASSERT_EQ(reader.Begin(), reader.End());
+  BOOST_REQUIRE(reader.Begin() == reader.End());
 }
 
-TEST(TestUncompressedTableReader, TestTableIterSTL) {
+BOOST_AUTO_TEST_CASE(TestTableIterSTL) {
   std::vector<std::map<std::string, std::string>> key_values{
       {{"abc", "def"}, {"a", "helloworld"}, {"xyz", "abc"}}};
 
@@ -178,18 +180,20 @@ TEST(TestUncompressedTableReader, TestTableIterSTL) {
   std::vector<std::pair<std::string, std::string>> output;
   std::copy(reader.Begin(), reader.End(), std::back_inserter(output));
 
-  ASSERT_EQ(output.size(), 3);
+  size_t expected_size{3};
+  BOOST_REQUIRE_EQUAL(output.size(), expected_size);
   size_t i{0};
 
   for (auto it = reader.Begin(); it != reader.End(); it++) {
-    ASSERT_EQ(*it, output[i]);
+    BOOST_REQUIRE(*it == output[i]);
     ++i;
   }
 
-  ASSERT_EQ(std::distance(reader.Begin(), reader.End()), 3);
+  BOOST_REQUIRE_EQUAL(std::distance(reader.Begin(), reader.End()),
+                      expected_size);
 }
 
-TEST(TestUncompressedTableReader, TestTableIterIncAndDeref) {
+BOOST_AUTO_TEST_CASE(TestTableIterIncAndDeref) {
   std::vector<std::map<std::string, std::string>> key_values{
       {{"abc", "def"}, {"a", "helloworld"}}};
 
@@ -213,18 +217,18 @@ TEST(TestUncompressedTableReader, TestTableIterIncAndDeref) {
   // return kv;
 
   auto kv{*it++};
-  ASSERT_EQ(kv.first, "a");
-  ASSERT_EQ(kv.second, "helloworld");
+  BOOST_REQUIRE_EQUAL(kv.first, "a");
+  BOOST_REQUIRE_EQUAL(kv.second, "helloworld");
 
-  ASSERT_EQ(it->first, "abc");
-  ASSERT_EQ(it->second, "def");
+  BOOST_REQUIRE_EQUAL(it->first, "abc");
+  BOOST_REQUIRE_EQUAL(it->second, "def");
 
   (void)it++;
 
-  ASSERT_EQ(it, reader.End());
+  BOOST_REQUIRE(it == reader.End());
 }
 
-TEST(TestUncompressedTableReader, TestTableCorruptionHugeBlockSize) {
+BOOST_AUTO_TEST_CASE(TestTableCorruptionHugeBlockSize) {
   std::vector<std::map<std::string, std::string>> key_values{
       {{"abc", "def"}, {"a", "helloworld"}}};
 
@@ -241,10 +245,10 @@ TEST(TestUncompressedTableReader, TestTableCorruptionHugeBlockSize) {
 
   auto reader{UncompressedTableReader(std::move(io), std::move(index))};
 
-  ASSERT_THROW(reader.ValueOf("abc"), std::system_error);
+  BOOST_REQUIRE_THROW(reader.ValueOf("abc"), std::system_error);
 }
 
-TEST(TestUncompressedTableReader, TestTableCorruptionHugeKeySize) {
+BOOST_AUTO_TEST_CASE(TestTableCorruptionHugeKeySize) {
   std::vector<std::map<std::string, std::string>> key_values{
       {{"abc", "def"}, {"a", "helloworld"}}};
 
@@ -261,10 +265,10 @@ TEST(TestUncompressedTableReader, TestTableCorruptionHugeKeySize) {
 
   auto reader{UncompressedTableReader(std::move(io), std::move(index))};
 
-  ASSERT_THROW(reader.ValueOf("abc"), std::system_error);
+  BOOST_REQUIRE_THROW(reader.ValueOf("abc"), std::system_error);
 }
 
-TEST(TestUncompressedTableReader, TestTableCorruptionHugeValueSize) {
+BOOST_AUTO_TEST_CASE(TestTableCorruptionHugeValueSize) {
   std::vector<std::map<std::string, std::string>> key_values{
       {{"abc", "def"}, {"a", "helloworld"}}};
 
@@ -282,7 +286,7 @@ TEST(TestUncompressedTableReader, TestTableCorruptionHugeValueSize) {
 
   auto reader{UncompressedTableReader(std::move(io), std::move(index))};
 
-  ASSERT_THROW(reader.ValueOf("abc"), std::system_error);
+  BOOST_REQUIRE_THROW(reader.ValueOf("abc"), std::system_error);
 }
 
 /**
@@ -291,7 +295,7 @@ TEST(TestUncompressedTableReader, TestTableCorruptionHugeValueSize) {
  * ValueOf returns the empty string (NOT std::nullopt) if the key
  * is explicitly deleted in the table.
  */
-TEST(TestUncompressedTableReader, TestDeletedValuesAreEmpty) {
+BOOST_AUTO_TEST_CASE(TestDeletedValuesAreEmpty) {
   std::vector<std::map<std::string, std::string>> key_values{
       {{"abc", ""}, {"a", ""}}, {{"xyz", ""}}};
 
@@ -312,7 +316,7 @@ TEST(TestUncompressedTableReader, TestDeletedValuesAreEmpty) {
       const auto& key{kv.first};
       const auto& value{kv.second};
 
-      ASSERT_EQ(reader.ValueOf(key), value);
+      BOOST_REQUIRE(reader.ValueOf(key) == value);
     }
   }
 }
@@ -323,7 +327,7 @@ TEST(TestUncompressedTableReader, TestDeletedValuesAreEmpty) {
  * ValueOf returns the std::nullopt if the key is not found in
  * the table.
  */
-TEST(TestUncompressedTableReader, TestNonexistantValuesAreNullopt) {
+BOOST_AUTO_TEST_CASE(TestNonexistantValuesAreNullopt) {
   std::vector<std::map<std::string, std::string>> key_values{
       {{"ba", ""}, {"bb", ""}}, {{"xyz", ""}}};
 
@@ -340,11 +344,13 @@ TEST(TestUncompressedTableReader, TestNonexistantValuesAreNullopt) {
   auto reader{UncompressedTableReader(std::move(io), std::move(index))};
 
   // Don't search any block
-  ASSERT_EQ(reader.ValueOf("a"), std::nullopt);
+  BOOST_REQUIRE(reader.ValueOf("a") == std::nullopt);
 
   // Search the first block
-  ASSERT_EQ(reader.ValueOf("bc"), std::nullopt);
+  BOOST_REQUIRE(reader.ValueOf("bc") == std::nullopt);
 
   // Search the last block
-  ASSERT_EQ(reader.ValueOf("zzz"), std::nullopt);
+  BOOST_REQUIRE(reader.ValueOf("zzz") == std::nullopt);
 }
+
+BOOST_AUTO_TEST_SUITE_END()

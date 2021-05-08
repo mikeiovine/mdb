@@ -1,4 +1,4 @@
-#include <gtest/gtest.h>
+#include <boost/test/unit_test.hpp>
 
 #include "log_reader.h"
 #include "log_writer.h"
@@ -6,10 +6,12 @@
 
 using namespace mdb;
 
+BOOST_AUTO_TEST_SUITE(TestLogIntegration)
+
 /**
  * Test that the log reader can read the log writer's output.
  */
-TEST(TestLogIntegration, TestLogReaderReadsLogWriterOutput) {
+BOOST_AUTO_TEST_CASE(TestLogReaderReadsLogWriterOutput) {
   std::vector<char> output;
   auto io{std::make_unique<WriteOnlyIOMock>(output)};
 
@@ -30,7 +32,9 @@ TEST(TestLogIntegration, TestLogReaderReadsLogWriterOutput) {
 
   for (const auto& pair : kv) {
     auto it{memtable.find(pair.first)};
-    ASSERT_NE(it, memtable.end());
-    ASSERT_EQ(it->second, pair.second);
+    BOOST_REQUIRE(it != memtable.end());
+    BOOST_REQUIRE_EQUAL(it->second, pair.second);
   }
 }
+
+BOOST_AUTO_TEST_SUITE_END()

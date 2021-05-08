@@ -20,8 +20,9 @@ add_library(
     db/disk_storage_manager.cc
     db/db.cc
 )
+target_include_directories(mdb_lib PUBLIC db include)
 
-find_package(Boost REQUIRED COMPONENTS program_options)
+find_package(Boost 1.76 REQUIRED COMPONENTS program_options unit_test_framework)
 if(Boost_FOUND)
     add_executable(
         mdb 
@@ -47,38 +48,22 @@ if(Boost_FOUND)
         mdb_lib
         Boost::program_options
     )
+
+    add_executable(
+        mdb_test
+        test/test_log_writer.cc
+        test/test_log_reader.cc
+        test/test_table_writer.cc
+        test/test_table_reader.cc
+        test/test_helpers.cc
+        test/test_log_integration.cc
+        test/test_table_integration.cc
+        test/test_disk_storage_manager.cc
+        test/test_main.cc
+    )
+    target_include_directories(mdb_test PRIVATE ${Boost_INCLUDE_DIRS})
+    target_link_libraries(
+        mdb_test
+        mdb_lib
+    )
 endif()
-
-
-
-FetchContent_Declare(
-  googletest
-  URL https://github.com/google/googletest/archive/master.zip
-)
-FetchContent_MakeAvailable(googletest)
-
-enable_testing()
-
-include_directories(db include)
-
-add_executable(
-    mdb_test
-    test/test_log_writer.cc
-    test/test_log_reader.cc
-    test/test_table_writer.cc
-    test/test_table_reader.cc
-    test/test_helpers.cc
-    test/test_log_integration.cc
-    test/test_table_integration.cc
-    test/test_disk_storage_manager.cc
-)
-
-target_link_libraries(
-    mdb_test
-    mdb_lib
-    gtest
-    gtest_main
-)
-
-include(GoogleTest)
-gtest_discover_tests(mdb_test)

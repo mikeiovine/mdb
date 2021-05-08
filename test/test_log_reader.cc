@@ -1,5 +1,4 @@
-#include <gtest/gtest.h>
-
+#include <boost/test/unit_test.hpp>
 #include <limits>
 #include <map>
 #include <vector>
@@ -8,6 +7,8 @@
 #include "util.h"
 
 using namespace mdb;
+
+BOOST_AUTO_TEST_SUITE(TestLogReader)
 
 namespace {
 
@@ -38,7 +39,7 @@ std::vector<char> ConstructInput(const SequenceT& seq) {
 /**
  * Test reading a log with no deletes
  */
-TEST(TestLogReader, TestLogReaderNoDeletes) {
+BOOST_AUTO_TEST_CASE(TestLogReaderNoDeletes) {
   SequenceT input_seq{{"abc", "def"},
                       {"xyz", "nop"},
                       {"hello", "world"},
@@ -54,13 +55,13 @@ TEST(TestLogReader, TestLogReaderNoDeletes) {
   MemTableT expected{
       {"abc", "overwritten_key"}, {"xyz", "nop"}, {"hello", "world"}};
 
-  ASSERT_EQ(memtable, expected);
+  BOOST_REQUIRE(expected == memtable);
 }
 
 /**
  * Test reading a log with a few deletes
  */
-TEST(TestLogReader, TestLogReaderWithDeletes) {
+BOOST_AUTO_TEST_CASE(TestLogReaderWithDeletes) {
   SequenceT input_seq{{"abc", "def"},
                       {"xyz", "nop"},
                       {"hello", "world"},
@@ -76,7 +77,7 @@ TEST(TestLogReader, TestLogReaderWithDeletes) {
 
   MemTableT expected{{"abc", "def"}};
 
-  ASSERT_EQ(memtable, expected);
+  BOOST_REQUIRE(expected == memtable);
 }
 
 /**
@@ -88,7 +89,7 @@ TEST(TestLogReader, TestLogReaderWithDeletes) {
  * Test reading a logfile with corrupted string sizes (huge number, bigger
  * than the available file space)
  */
-TEST(TestLogReader, TestLogReaderCorruptionHugeKeySize) {
+BOOST_AUTO_TEST_CASE(TestLogReaderCorruptionHugeKeySize) {
   SequenceT input_seq{{"abc", "def"},
                       {"notdeleted", "val"},
                       {"notdeleted", ""},
@@ -110,14 +111,14 @@ TEST(TestLogReader, TestLogReaderCorruptionHugeKeySize) {
   MemTableT memtable{reader.ReadMemTable()};
   MemTableT expected{{"abc", "def"}, {"notdeleted", "val"}};
 
-  ASSERT_EQ(memtable, expected);
+  BOOST_REQUIRE(expected == memtable);
 }
 
 /**
  * Like TestLogReaderCorruputionHugeValueSize, but puts
  * the problematic size bytes before a key.
  */
-TEST(TestLogReader, TestLogReaderCorruptionHugeValueSize) {
+BOOST_AUTO_TEST_CASE(TestLogReaderCorruptionHugeValueSize) {
   SequenceT input_seq{{"abc", "def"},
                       {"notdeleted", "val"},
                       {"notdeleted", ""},
@@ -139,13 +140,13 @@ TEST(TestLogReader, TestLogReaderCorruptionHugeValueSize) {
   MemTableT memtable{reader.ReadMemTable()};
   MemTableT expected{{"abc", "def"}, {"notdeleted", "val"}};
 
-  ASSERT_EQ(memtable, expected);
+  BOOST_REQUIRE(expected == memtable);
 }
 
 /**
  * Test that the log reader fails to read a key without a value
  */
-TEST(TestLogReader, TestLogReaderCorruptionKeyWithNoValue) {
+BOOST_AUTO_TEST_CASE(TestLogReaderCorruptionKeyWithNoValue) {
   SequenceT input_seq{{"abc", "def"}, {"ghi", "jkl"}};
 
   std::vector<char> input{ConstructInput(input_seq)};
@@ -159,5 +160,7 @@ TEST(TestLogReader, TestLogReaderCorruptionKeyWithNoValue) {
   MemTableT memtable{reader.ReadMemTable()};
   MemTableT expected{{"abc", "def"}};
 
-  ASSERT_EQ(memtable, expected);
+  BOOST_REQUIRE(expected == memtable);
 }
+
+BOOST_AUTO_TEST_SUITE_END()

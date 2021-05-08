@@ -1,5 +1,4 @@
-#include <gtest/gtest.h>
-
+#include <boost/test/unit_test.hpp>
 #include <iostream>
 
 #include "table_reader.h"
@@ -8,10 +7,12 @@
 
 using namespace mdb;
 
+BOOST_AUTO_TEST_SUITE(TestTableIntegration)
+
 /**
  * Test that the table reader can read what the table writer outputs.
  */
-TEST(TestTableIntegration, TestUncompressedTableIntegration) {
+BOOST_AUTO_TEST_CASE(TestUncompressedTableIntegration) {
   std::vector<char> output;
   auto io{std::make_unique<WriteOnlyIOMock>(output)};
 
@@ -27,8 +28,10 @@ TEST(TestTableIntegration, TestUncompressedTableIntegration) {
   UncompressedTableReader reader{std::move(io_read), writer.GetIndex()};
 
   for (const auto& pair : memtable) {
-    ASSERT_EQ(reader.ValueOf(pair.first), pair.second);
+    BOOST_REQUIRE(reader.ValueOf(pair.first) == pair.second);
   }
 
-  ASSERT_EQ(reader.ValueOf("f"), "added_later");
+  BOOST_REQUIRE(reader.ValueOf("f") == "added_later");
 }
+
+BOOST_AUTO_TEST_SUITE_END()

@@ -1,4 +1,4 @@
-#include <gtest/gtest.h>
+#include <boost/test/unit_test.hpp>
 
 #include "helpers.h"
 #include "options.h"
@@ -6,7 +6,9 @@
 
 using namespace mdb;
 
-TEST(TestHelpers, TestAddStringToWritable) {
+BOOST_AUTO_TEST_SUITE(TestHelpers)
+
+BOOST_AUTO_TEST_CASE(TestAddStringToWritable) {
   std::vector<char> buf;
 
   std::string s1{"somestring"};
@@ -15,7 +17,7 @@ TEST(TestHelpers, TestAddStringToWritable) {
   util::AddStringToWritable(s1, buf);
   util::AddStringToWritable(s2, buf);
 
-  ASSERT_EQ(buf.size(), 2 * sizeof(size_t) + s1.size() + s2.size());
+  BOOST_REQUIRE_EQUAL(buf.size(), 2 * sizeof(size_t) + s1.size() + s2.size());
 
   size_t buf_s1size{ReadSizeT(buf, 0)};
   std::string buf_s1{ReadString(buf, sizeof(size_t), buf_s1size)};
@@ -24,13 +26,13 @@ TEST(TestHelpers, TestAddStringToWritable) {
   std::string buf_s2{
       ReadString(buf, 2 * sizeof(size_t) + buf_s1size, buf_s2size)};
 
-  ASSERT_EQ(buf_s1size, s1.size());
-  ASSERT_EQ(buf_s1, s1);
-  ASSERT_EQ(buf_s2size, s2.size());
-  ASSERT_EQ(buf_s2, s2);
+  BOOST_REQUIRE_EQUAL(buf_s1size, s1.size());
+  BOOST_REQUIRE_EQUAL(buf_s1, s1);
+  BOOST_REQUIRE_EQUAL(buf_s2size, s2.size());
+  BOOST_REQUIRE_EQUAL(buf_s2, s2);
 }
 
-TEST(TestHelpers, TestLogFileName) {
+BOOST_AUTO_TEST_CASE(TestLogFileName) {
   Options opt1{.path = "./"};
   Options opt2{.path = "/another/path/"};
   Options opt3{.path = "/forgot/slash"};
@@ -39,12 +41,12 @@ TEST(TestHelpers, TestLogFileName) {
   std::string logfile_2{util::LogFileName(opt2, 5)};
   std::string logfile_3{util::LogFileName(opt3, 100)};
 
-  ASSERT_EQ(logfile_1, "./log10.dat");
-  ASSERT_EQ(logfile_2, "/another/path/log5.dat");
-  ASSERT_EQ(logfile_3, "/forgot/slash/log100.dat");
+  BOOST_REQUIRE_EQUAL(logfile_1, "./log10.dat");
+  BOOST_REQUIRE_EQUAL(logfile_2, "/another/path/log5.dat");
+  BOOST_REQUIRE_EQUAL(logfile_3, "/forgot/slash/log100.dat");
 }
 
-TEST(TestHelpers, TestTableFileName) {
+BOOST_AUTO_TEST_CASE(TestTableFileName) {
   Options opt1{.path = ""};
   Options opt2{.path = "/path/"};
   Options opt3{.path = "/path"};
@@ -53,7 +55,9 @@ TEST(TestHelpers, TestTableFileName) {
   std::string logfile_2{util::TableFileName(opt2, 2)};
   std::string logfile_3{util::TableFileName(opt3, 3)};
 
-  ASSERT_EQ(logfile_1, "table1.mdb");
-  ASSERT_EQ(logfile_2, "/path/table2.mdb");
-  ASSERT_EQ(logfile_3, "/path/table3.mdb");
+  BOOST_REQUIRE_EQUAL(logfile_1, "table1.mdb");
+  BOOST_REQUIRE_EQUAL(logfile_2, "/path/table2.mdb");
+  BOOST_REQUIRE_EQUAL(logfile_3, "/path/table3.mdb");
 }
+
+BOOST_AUTO_TEST_SUITE_END()

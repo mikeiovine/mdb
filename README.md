@@ -8,12 +8,15 @@ This is still a work-in-progress.
 
 ## Dependencies
 
-* [boost](https://www.boost.org/)
-* [googletest](https://github.com/google/googletest) [testing only]
+There is only one dependency, [boost](https://www.boost.org/) (>= 1.76.0). To compile
+this project, you'll need to install `boost` in a location that 
+[FindBoost](https://cmake.org/cmake/help/latest/module/FindBoost.html)
+can locate. You must build `Boost.ProgramOptions` since this component
+of `boost` is not header-only.
 
 This project will only compile on POSIX compliant operating systems.
 I did some benchmarking and found that it was much faster to do file
-IO with syscalls instead of with `iostream`.
+IO with non-portable syscalls instead of with `iostream`.
 
 ## Basic Usage
 ```cpp

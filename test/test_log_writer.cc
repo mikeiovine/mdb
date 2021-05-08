@@ -1,5 +1,4 @@
-#include <gtest/gtest.h>
-
+#include <boost/test/unit_test.hpp>
 #include <string>
 
 #include "log_writer.h"
@@ -7,44 +6,46 @@
 
 using namespace mdb;
 
+BOOST_AUTO_TEST_SUITE(TestLogWriter)
+
 void CompareKvToOutput(
     const std::vector<char>& write_dest,
     const std::vector<std::pair<std::string, std::string>>& pairs) {
   size_t cur{0};
   for (const auto& kv : pairs) {
-    ASSERT_TRUE(write_dest.size() - cur >= sizeof(size_t));
+    BOOST_REQUIRE(write_dest.size() - cur >= sizeof(size_t));
 
     size_t key_size{ReadSizeT(write_dest, cur)};
     cur += sizeof(size_t);
 
-    ASSERT_EQ(key_size, kv.first.size());
+    BOOST_REQUIRE_EQUAL(key_size, kv.first.size());
 
-    ASSERT_TRUE(write_dest.size() - cur >= key_size);
+    BOOST_REQUIRE(write_dest.size() - cur >= key_size);
     std::string key{ReadString(write_dest, cur, key_size)};
     cur += key.size();
 
-    ASSERT_EQ(key, kv.first);
+    BOOST_REQUIRE_EQUAL(key, kv.first);
 
-    ASSERT_TRUE(write_dest.size() - cur >= sizeof(size_t));
+    BOOST_REQUIRE(write_dest.size() - cur >= sizeof(size_t));
     size_t value_size{ReadSizeT(write_dest, cur)};
     cur += sizeof(size_t);
 
-    ASSERT_EQ(value_size, kv.second.size());
+    BOOST_REQUIRE_EQUAL(value_size, kv.second.size());
 
-    ASSERT_TRUE(write_dest.size() - cur >= value_size);
+    BOOST_REQUIRE(write_dest.size() - cur >= value_size);
     std::string value{ReadString(write_dest, cur, value_size)};
     cur += value.size();
 
-    ASSERT_EQ(value, kv.second);
+    BOOST_REQUIRE_EQUAL(value, kv.second);
   }
 
-  ASSERT_EQ(cur, write_dest.size());
+  BOOST_REQUIRE_EQUAL(cur, write_dest.size());
 }
 
 /**
  * Test that the logfile format is correct with no deletes
  */
-TEST(TestLogWriter, TestLogfileFormatNoDeletes) {
+BOOST_AUTO_TEST_CASE(TestLogfileFormatNoDeletes) {
   std::vector<char> buf;
 
   auto io{std::make_unique<WriteOnlyIOMock>(buf)};
@@ -66,7 +67,7 @@ TEST(TestLogWriter, TestLogfileFormatNoDeletes) {
 /**
  * Test that the logfile format is correct when deletes are included
  */
-TEST(TestLogWriter, TestLogfileFormatWithDeletes) {
+BOOST_AUTO_TEST_CASE(TestLogfileFormatWithDeletes) {
   std::vector<char> buf;
 
   auto io{std::make_unique<WriteOnlyIOMock>(buf)};
@@ -92,7 +93,7 @@ TEST(TestLogWriter, TestLogfileFormatWithDeletes) {
  * Test adding lots of small records.
  * Effectively tests the automatic flushing mechanism.
  */
-TEST(TestLogWriter, TestLogfileFormatManySmallRecords) {
+BOOST_AUTO_TEST_CASE(TestLogfileFormatManySmallRecords) {
   std::vector<char> buf;
 
   auto io{std::make_unique<WriteOnlyIOMock>(buf)};
@@ -112,7 +113,7 @@ TEST(TestLogWriter, TestLogfileFormatManySmallRecords) {
  * Test that automatic syncing happens for all records when
  * the user passes sync == true
  */
-TEST(TestLogWriter, TestLogfileAutoSync) {
+BOOST_AUTO_TEST_CASE(TestLogfileAutoSync) {
   std::vector<char> buf;
 
   int num_syncs{0};
@@ -131,7 +132,9 @@ TEST(TestLogWriter, TestLogfileAutoSync) {
   int i{1};
   for (const auto& kv : pairs) {
     log.Add(kv.first, kv.second);
-    ASSERT_EQ(num_syncs, i);
+    BOOST_REQUIRE_EQUAL(num_syncs, i);
     i += 1;
   }
 }
+
+BOOST_AUTO_TEST_SUITE_END()

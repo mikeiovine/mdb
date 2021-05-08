@@ -1,5 +1,4 @@
-#include <gtest/gtest.h>
-
+#include <boost/test/unit_test.hpp>
 #include <cmath>
 #include <iostream>
 #include <map>
@@ -9,6 +8,8 @@
 #include "util.h"
 
 using namespace mdb;
+
+BOOST_AUTO_TEST_SUITE(TestTableWriter);
 
 using MemTableOrderedT = std::vector<std::pair<std::string, std::string>>;
 
@@ -20,11 +21,11 @@ void CheckNumBlocksUncompressed(const std::vector<char>& output, int expected) {
   int n{0};
   size_t pos{0};
   while (pos < output.size()) {
-    ASSERT_TRUE(output.size() - pos >= sizeof(size_t));
+    BOOST_REQUIRE(output.size() - pos >= sizeof(size_t));
     pos += ReadSizeT(output, pos) + sizeof(size_t);
     n += 1;
   }
-  ASSERT_EQ(n, expected);
+  BOOST_REQUIRE_EQUAL(n, expected);
 }
 
 /**
@@ -34,26 +35,26 @@ void ReadUncompressedBlock(const std::vector<char>& buf, size_t pos,
                            size_t block_size, MemTableOrderedT& output) {
   size_t i{0};
   while (i < block_size) {
-    ASSERT_TRUE(buf.size() - (pos + i) >= sizeof(size_t));
+    BOOST_REQUIRE(buf.size() - (pos + i) >= sizeof(size_t));
     size_t key_size{ReadSizeT(buf, pos + i)};
     i += sizeof(size_t);
 
-    ASSERT_TRUE(buf.size() - (pos + i) >= key_size);
+    BOOST_REQUIRE(buf.size() - (pos + i) >= key_size);
     std::string key{ReadString(buf, pos + i, key_size)};
     i += key_size;
 
-    ASSERT_TRUE(buf.size() - (pos + i) >= sizeof(size_t));
+    BOOST_REQUIRE(buf.size() - (pos + i) >= sizeof(size_t));
     size_t value_size{ReadSizeT(buf, pos + i)};
     i += sizeof(size_t);
 
-    ASSERT_TRUE(buf.size() - (pos + i) >= value_size);
+    BOOST_REQUIRE(buf.size() - (pos + i) >= value_size);
     std::string value{ReadString(buf, pos + i, value_size)};
     i += value_size;
 
     output.push_back({key, value});
   }
 
-  ASSERT_EQ(i, block_size);
+  BOOST_REQUIRE_EQUAL(i, block_size);
 }
 
 /**
@@ -66,23 +67,23 @@ void CompareUncompressedOutput(const std::vector<char>& buf,
   MemTableOrderedT res;
 
   while (pos < buf.size()) {
-    ASSERT_TRUE(buf.size() - pos >= sizeof(size_t));
+    BOOST_REQUIRE(buf.size() - pos >= sizeof(size_t));
 
     size_t block_size{ReadSizeT(buf, pos)};
     pos += sizeof(size_t);
 
-    ASSERT_TRUE(buf.size() - pos >= block_size);
+    BOOST_REQUIRE(buf.size() - pos >= block_size);
     ReadUncompressedBlock(buf, pos, block_size, res);
     pos += block_size;
   }
 
-  ASSERT_EQ(res, expected);
+  BOOST_REQUIRE(res == expected);
 }
 
 /**
  * Test that the table writes the correct number of blocks
  */
-TEST(TestUncompressedTableWriter, TestCorrectNumBlocks) {
+BOOST_AUTO_TEST_CASE(TestCorrectNumBlocks) {
   std::vector<char> output;
   auto io{std::make_unique<WriteOnlyIOMock>(output)};
   bool sync{false};
@@ -109,7 +110,7 @@ TEST(TestUncompressedTableWriter, TestCorrectNumBlocks) {
  * - All keys should be present
  * - The keys should be in sorted order
  */
-TEST(TestUncompressedTableWriter, TestContentsBlocks) {
+BOOST_AUTO_TEST_CASE(TestContentsBlocks) {
   std::vector<char> output;
   auto io{std::make_unique<WriteOnlyIOMock>(output)};
   bool sync{false};
@@ -138,7 +139,7 @@ TEST(TestUncompressedTableWriter, TestContentsBlocks) {
  * it should store (key, offset) pairs, where offset is the start
  * of the block starting with key.
  */
-TEST(TestUncompressedTableWriter, TestIndex) {
+BOOST_AUTO_TEST_CASE(TestIndex) {
   std::vector<char> output;
   auto io{std::make_unique<WriteOnlyIOMock>(output)};
   bool sync{false};
@@ -166,14 +167,14 @@ TEST(TestUncompressedTableWriter, TestIndex) {
       {"4", second_block_size + first_block_size + 2 * sizeof(size_t)}};
 
   writer.WriteMemtable(to_write);
-  ASSERT_EQ(expected, writer.GetIndex());
+  BOOST_REQUIRE(expected == writer.GetIndex());
 }
 
 /**
  * Test that the NumKeys() method returns the correct number of keys added to
  * the writer.
  */
-TEST(TestUncompressedTableWriter, TestNumKeys) {
+BOOST_AUTO_TEST_CASE(TestNumKeys) {
   bool sync{false};
   size_t block_size{16 + 5 * sizeof(size_t)};
 
@@ -193,15 +194,17 @@ TEST(TestUncompressedTableWriter, TestNumKeys) {
   writer2.Add("1", "");
   writer2.Add("2", "");
 
-  ASSERT_EQ(writer1.NumKeys(), 3);
-  ASSERT_EQ(writer2.NumKeys(), 2);
+  size_t expected_writer1_keys{3};
+  size_t expected_writer2_keys{2};
+  BOOST_REQUIRE_EQUAL(writer1.NumKeys(), expected_writer1_keys);
+  BOOST_REQUIRE_EQUAL(writer2.NumKeys(), expected_writer2_keys);
 }
 
 /**
  * Test that the Flush() method really flushes the in-memory buffer and makes
  * a new block when manually adding keys.
  */
-TEST(TestUncompressedTableWriter, TestFlush) {
+BOOST_AUTO_TEST_CASE(TestFlush) {
   bool sync{false};
   size_t block_size{16 + 5 * sizeof(size_t)};
 
@@ -214,14 +217,15 @@ TEST(TestUncompressedTableWriter, TestFlush) {
   writer.Flush();
   writer.Add("2", "");
 
-  ASSERT_EQ(writer.GetIndex().size(), 2);
+  size_t expected_size{2};
+  BOOST_REQUIRE_EQUAL(writer.GetIndex().size(), expected_size);
 }
 
 /**
  * Test that an exception is thrown if you try to add keys in
  * non-sorted order.
  */
-TEST(TestUncompressedTableWriter, TestAddingUnsortedThrows) {
+BOOST_AUTO_TEST_CASE(TestAddingUnsortedThrows) {
   bool sync{false};
   size_t block_size{16 + 5 * sizeof(size_t)};
 
@@ -230,5 +234,7 @@ TEST(TestUncompressedTableWriter, TestAddingUnsortedThrows) {
   UncompressedTableWriter writer{std::move(io), sync, block_size};
 
   writer.Add("2", "");
-  ASSERT_THROW(writer.Add("1", ""), std::invalid_argument);
+  BOOST_REQUIRE_THROW(writer.Add("1", ""), std::invalid_argument);
 }
+
+BOOST_AUTO_TEST_SUITE_END()
