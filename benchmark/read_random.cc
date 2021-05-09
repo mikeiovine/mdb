@@ -14,7 +14,8 @@ bool ReadRandomBenchmark::Run() {
     metrics.value() << "read_num,read_time(microseconds)\n";
   }
 
-  auto key_value_pairs{CreateRandomKeyValuePairs(100, 16, 100)};
+  auto key_value_pairs{CreateRandomKeyValuePairs(
+      options_.num_entries, options_.key_size, options_.value_size)};
 
   for (const auto& pair : key_value_pairs) {
     db.Put(pair.first, pair.second);

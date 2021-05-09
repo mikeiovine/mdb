@@ -19,7 +19,8 @@ bool WriteRandomBenchmark::Run() {
     metrics.value() << "write_num,write_time(microseconds)\n";
   }
 
-  auto key_value_pairs{CreateRandomKeyValuePairs(100, 16, 100)};
+  auto key_value_pairs{CreateRandomKeyValuePairs(
+      options_.num_entries, options_.key_size, options_.value_size)};
 
   auto start{std::chrono::high_resolution_clock::now()};
   int n{1};
