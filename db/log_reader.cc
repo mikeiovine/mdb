@@ -23,7 +23,6 @@ std::optional<std::string> LogReader::ReadNextString() {
   std::vector<char> buf;
   buf.reserve(sizeof(size_t));
 
-  // TODO: Log corruption where nullopt is returned
   if (file_->ReadNoExcept(buf.data(), sizeof(size_t), pos_) != sizeof(size_t)) {
     return std::nullopt;
   }

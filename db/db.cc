@@ -1,5 +1,7 @@
 #include "db.h"
 
+#include <boost/log/trivial.hpp>
+
 namespace mdb {
 
 DB::DB(Options opt)
@@ -65,7 +67,8 @@ void DB::ClearMemtable() {
   try {
     options_.env->RemoveFile(logger_.GetFileName());
   } catch (const std::system_error&) {
-    // TODO log this error.
+    BOOST_LOG_TRIVIAL(error)
+        << "Failed to remove obsolete log file " << logger_.GetFileName();
   }
 
   logger_ = LogWriter(next_log_, options_);

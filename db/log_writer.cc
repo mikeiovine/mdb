@@ -1,5 +1,6 @@
 #include "log_writer.h"
 
+#include <boost/log/trivial.hpp>
 #include <cassert>
 #include <system_error>
 
@@ -23,7 +24,9 @@ LogWriter::~LogWriter() {
     try {
       FlushBuffer();
     } catch (const std::system_error&) {
-      // TODO: Log that something horrible happened
+      BOOST_LOG_TRIVIAL(error)
+          << "Failed to flush buffer when destructing LogWriter. Some recent "
+             "writes may not have made it to disk!";
     }
   }
 }

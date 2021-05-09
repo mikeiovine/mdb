@@ -1,3 +1,4 @@
+#include <boost/log/trivial.hpp>
 #include <boost/program_options.hpp>
 #include <filesystem>
 #include <iostream>
@@ -34,7 +35,7 @@ int main(int argc, char* argv[]) {
   }
 
   PathT path{std::filesystem::canonical(vm["path"].as<PathT>())};
-  std::cout << "Writing files to " << path << '\n';
+  BOOST_LOG_TRIVIAL(info) << "Started MDB. Writing files to " << path;
 
   Options opt{.path = path};
   DB db(opt);
