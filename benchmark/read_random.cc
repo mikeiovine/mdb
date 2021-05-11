@@ -6,7 +6,8 @@ namespace mdb {
 namespace benchmark {
 
 bool ReadRandomBenchmark::Run() {
-  Options opt{.path = "./benchmark/db_files/read_random"};
+  Options opt{.path = "./benchmark/db_files/read_random",
+              .recovery_mode = false};
   DB db(opt);
 
   auto metrics{OpenMetricsFile(options_, GetMetricsFilename())};

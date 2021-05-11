@@ -11,7 +11,8 @@ namespace benchmark {
 
 bool WriteRandomBenchmark::Run() {
   // TODO make this directory automatically
-  Options opt{.path = "./benchmark/db_files/write_random"};
+  Options opt{.path = "./benchmark/db_files/write_random",
+              .recovery_mode = false};
   DB db(opt);
 
   auto metrics{OpenMetricsFile(options_, GetMetricsFilename())};

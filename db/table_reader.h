@@ -29,10 +29,18 @@ class TableReader {
   virtual size_t Size() const = 0;
 
   virtual std::string GetFileName() const noexcept { return ""; }
+
+  virtual size_t GetLevel() const = 0;
 };
 
 class UncompressedTableReader : public TableReader {
  public:
+  // Construct the index by reading the file on disk.
+  explicit UncompressedTableReader(std::unique_ptr<ReadOnlyIO>&& file);
+
+  // Use the passed index instead of constructing it
+  // More efficient than the other ctor, but more dangerous - the index
+  // must actually reflect the contents on disk!!
   UncompressedTableReader(std::unique_ptr<ReadOnlyIO>&& file, IndexT index)
       : file_{std::move(file)}, index_{std::move(index)} {}
 
@@ -42,6 +50,7 @@ class UncompressedTableReader : public TableReader {
   TableIterator End() override;
 
   size_t Size() const override;
+  size_t GetLevel() const override;
 
  private:
   class UncompressedTableIter;
@@ -54,7 +63,7 @@ class UncompressedTableReader : public TableReader {
   std::string GetFileName() const noexcept override;
 
   std::unique_ptr<ReadOnlyIO> file_;
-  const IndexT index_;
+  IndexT index_;
 };
 
 }  // namespace mdb

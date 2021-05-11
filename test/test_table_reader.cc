@@ -29,8 +29,10 @@ BlockT ConstructBlock(const std::map<std::string, std::string> &pairs) {
   return block;
 }
 
-std::vector<char> ConstructTable(const std::vector<BlockT> blocks) {
+std::vector<char> ConstructTable(const std::vector<BlockT> blocks,
+                                 size_t level) {
   std::vector<char> res;
+  WriteSizeT(res, level);
 
   for (const auto &block : blocks) {
     res.insert(res.end(), block.data.cbegin(), block.data.cend());
@@ -40,7 +42,7 @@ std::vector<char> ConstructTable(const std::vector<BlockT> blocks) {
 }
 
 IndexT ConstructIndex(const std::vector<char> &buf) {
-  size_t pos{0};
+  size_t pos{sizeof(size_t)};
   IndexT idx;
 
   while (pos < buf.size()) {
@@ -69,7 +71,7 @@ BOOST_AUTO_TEST_CASE(TestTableReaderFindsCorrectKeys) {
     blocks.push_back(ConstructBlock(kv_map));
   }
 
-  std::vector<char> buf{ConstructTable(blocks)};
+  std::vector<char> buf{ConstructTable(blocks, 0)};
 
   auto index{ConstructIndex(buf)};
   auto io{std::make_unique<ReadOnlyIOMock>(std::move(buf))};
@@ -97,7 +99,7 @@ BOOST_AUTO_TEST_CASE(TestTableReaderIterCorrectOrder) {
     blocks.push_back(ConstructBlock(kv_map));
   }
 
-  std::vector<char> buf{ConstructTable(blocks)};
+  std::vector<char> buf{ConstructTable(blocks, 0)};
 
   auto index{ConstructIndex(buf)};
   auto io{std::make_unique<ReadOnlyIOMock>(std::move(buf))};
@@ -129,7 +131,7 @@ BOOST_AUTO_TEST_CASE(TestTableIterEq) {
     blocks.push_back(ConstructBlock(kv_map));
   }
 
-  std::vector<char> buf{ConstructTable(blocks)};
+  std::vector<char> buf{ConstructTable(blocks, 0)};
 
   auto index{ConstructIndex(buf)};
   auto io{std::make_unique<ReadOnlyIOMock>(std::move(buf))};
@@ -169,7 +171,7 @@ BOOST_AUTO_TEST_CASE(TestTableIterSTL) {
     blocks.push_back(ConstructBlock(kv_map));
   }
 
-  std::vector<char> buf{ConstructTable(blocks)};
+  std::vector<char> buf{ConstructTable(blocks, 0)};
 
   auto index{ConstructIndex(buf)};
   auto io{std::make_unique<ReadOnlyIOMock>(std::move(buf))};
@@ -201,7 +203,7 @@ BOOST_AUTO_TEST_CASE(TestTableIterIncAndDeref) {
     blocks.push_back(ConstructBlock(kv_map));
   }
 
-  std::vector<char> buf{ConstructTable(blocks)};
+  std::vector<char> buf{ConstructTable(blocks, 0)};
 
   auto index{ConstructIndex(buf)};
   auto io{std::make_unique<ReadOnlyIOMock>(std::move(buf))};
@@ -236,10 +238,10 @@ BOOST_AUTO_TEST_CASE(TestTableCorruptionHugeBlockSize) {
     blocks.push_back(ConstructBlock(kv_map));
   }
 
-  std::vector<char> buf{ConstructTable(blocks)};
+  std::vector<char> buf{ConstructTable(blocks, 0)};
 
   auto index{ConstructIndex(buf)};
-  *reinterpret_cast<size_t *>(buf.data()) = 100000000000000;
+  *reinterpret_cast<size_t *>(buf.data() + sizeof(size_t)) = 100000000000000;
   auto io{std::make_unique<ReadOnlyIOMock>(std::move(buf))};
 
   auto reader{UncompressedTableReader(std::move(io), std::move(index))};
@@ -256,7 +258,7 @@ BOOST_AUTO_TEST_CASE(TestTableCorruptionHugeKeySize) {
     blocks.push_back(ConstructBlock(kv_map));
   }
 
-  std::vector<char> buf{ConstructTable(blocks)};
+  std::vector<char> buf{ConstructTable(blocks, 0)};
 
   auto index{ConstructIndex(buf)};
   *reinterpret_cast<size_t *>(buf.data() + sizeof(size_t)) = 10000;
@@ -276,10 +278,10 @@ BOOST_AUTO_TEST_CASE(TestTableCorruptionHugeValueSize) {
     blocks.push_back(ConstructBlock(kv_map));
   }
 
-  std::vector<char> buf{ConstructTable(blocks)};
+  std::vector<char> buf{ConstructTable(blocks, 0)};
 
   auto index{ConstructIndex(buf)};
-  *reinterpret_cast<size_t *>(buf.data() + 2 * sizeof(size_t) + sizeof("abc")) =
+  *reinterpret_cast<size_t *>(buf.data() + 3 * sizeof(size_t) + sizeof("abc")) =
       100000000000000;
   auto io{std::make_unique<ReadOnlyIOMock>(std::move(buf))};
 
@@ -303,7 +305,7 @@ BOOST_AUTO_TEST_CASE(TestDeletedValuesAreEmpty) {
     blocks.push_back(ConstructBlock(kv_map));
   }
 
-  std::vector<char> buf{ConstructTable(blocks)};
+  std::vector<char> buf{ConstructTable(blocks, 0)};
 
   auto index{ConstructIndex(buf)};
   auto io{std::make_unique<ReadOnlyIOMock>(std::move(buf))};
@@ -335,7 +337,7 @@ BOOST_AUTO_TEST_CASE(TestNonexistantValuesAreNullopt) {
     blocks.push_back(ConstructBlock(kv_map));
   }
 
-  std::vector<char> buf{ConstructTable(blocks)};
+  std::vector<char> buf{ConstructTable(blocks, 0)};
 
   auto index{ConstructIndex(buf)};
   auto io{std::make_unique<ReadOnlyIOMock>(std::move(buf))};
@@ -350,6 +352,63 @@ BOOST_AUTO_TEST_CASE(TestNonexistantValuesAreNullopt) {
 
   // Search the last block
   BOOST_REQUIRE(reader.ValueOf("zzz") == std::nullopt);
+}
+
+/**
+ * Test that GetLevel returns the number stored at the start of the file
+ */
+BOOST_AUTO_TEST_CASE(TestGetLevel) {
+  size_t level{42};
+  std::vector<std::map<std::string, std::string>> key_values{
+      {{"key", "value"}}};
+
+  std::vector<BlockT> blocks;
+  for (const auto &kv_map : key_values) {
+    blocks.push_back(ConstructBlock(kv_map));
+  }
+
+  std::vector<char> buf{ConstructTable(blocks, level)};
+
+  auto index{ConstructIndex(buf)};
+  auto io{std::make_unique<ReadOnlyIOMock>(std::move(buf))};
+
+  auto reader{UncompressedTableReader(std::move(io), std::move(index))};
+
+  BOOST_REQUIRE_EQUAL(reader.GetLevel(), level);
+}
+
+/**
+ * Test that the LogReader can recover the correct index/level given only
+ * an on-disk file
+ */
+BOOST_AUTO_TEST_CASE(TestConstructFromFileOnly) {
+  size_t level{42};
+  std::vector<std::map<std::string, std::string>> key_values{
+      {{"abc", "def"}, {"a", "helloworld"}},
+      {{"b12", "123451251512"}, {"bbb", "bbbbbbbbbbbbbbbbbbb"}},
+      {{"xyz", "hello"}}};
+
+  std::vector<BlockT> blocks;
+  for (const auto &kv_map : key_values) {
+    blocks.push_back(ConstructBlock(kv_map));
+  }
+
+  std::vector<char> buf{ConstructTable(blocks, level)};
+
+  auto io{std::make_unique<ReadOnlyIOMock>(std::move(buf))};
+
+  auto reader{UncompressedTableReader(std::move(io))};
+
+  BOOST_REQUIRE_EQUAL(reader.GetLevel(), level);
+
+  for (const auto &kv_map : key_values) {
+    for (const auto &kv : kv_map) {
+      const auto &key{kv.first};
+      const auto &value{kv.second};
+
+      BOOST_REQUIRE(reader.ValueOf(key) == value);
+    }
+  }
 }
 
 BOOST_AUTO_TEST_SUITE_END()

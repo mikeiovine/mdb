@@ -45,10 +45,7 @@ class TableWriter {
 class UncompressedTableWriter : public TableWriter {
  public:
   UncompressedTableWriter(std::unique_ptr<WriteOnlyIO>&& file, bool sync,
-                          size_t block_size)
-      : file_{std::move(file)}, sync_{sync}, block_size_{block_size} {
-    assert(file_ != nullptr);
-  }
+                          size_t block_size, size_t level);
 
   void WriteMemtable(const MemTableT& memtable) override;
 
@@ -71,7 +68,7 @@ class UncompressedTableWriter : public TableWriter {
   const bool sync_;
   const size_t block_size_;
 
-  size_t cur_index_{0};
+  size_t cur_index_{sizeof(size_t)};
   size_t num_keys_{0};
   bool block_marked_{false};
 

@@ -8,15 +8,15 @@
 
 namespace mdb {
 
+LogWriter::LogWriter() : file_{nullptr}, sync_{false} {}
+
 LogWriter::LogWriter(int log_number, const Options& options)
     : LogWriter(
           options.env->MakeWriteOnlyIO(util::LogFileName(options, log_number)),
           options.write_sync) {}
 
 LogWriter::LogWriter(std::unique_ptr<WriteOnlyIO>&& file, bool sync)
-    : file_{std::move(file)}, sync_{sync} {
-  assert(file_ != nullptr);
-}
+    : file_{std::move(file)}, sync_{sync} {}
 
 LogWriter::~LogWriter() {
   // User did not flush before destructing; we still have pending writes
@@ -32,6 +32,12 @@ LogWriter::~LogWriter() {
 }
 
 void LogWriter::Add(std::string_view key, std::string_view value) {
+  if (file_ == nullptr) {
+    BOOST_LOG_TRIVIAL(warning) << "Trying to log data to nonexistent (== "
+                                  "nullptr) log file. No action was taken.";
+    return;
+  }
+
   // For the purposes of exception safety, we write everything together.
   // If we wrote key/value sequentially, and an exception occured during
   // the key write, we would leave the log file in a unreadable state!
@@ -49,6 +55,12 @@ size_t LogWriter::GetSpaceAvail() const noexcept {
 }
 
 void LogWriter::FlushBuffer() {
+  if (file_ == nullptr) {
+    BOOST_LOG_TRIVIAL(warning) << "Trying to flush buffer to nonexistent (== "
+                                  "nullptr) log file. No action was taken.";
+    return;
+  }
+
   if (buf_pos_) {
     // If syncing is on, writes should always happen instantly.
     assert(!sync_);
@@ -87,7 +99,11 @@ void LogWriter::Append(const std::vector<char>& data) {
 size_t LogWriter::Size() const noexcept { return size_ + buf_pos_; }
 
 std::string LogWriter::GetFileName() const noexcept {
-  assert(file_ != nullptr);
+  if (file_ == nullptr) {
+    BOOST_LOG_TRIVIAL(warning)
+        << "Trying to get file name of nonexistent (== nullptr) log file.";
+    return "";
+  }
   return file_->GetFileName();
 }
 

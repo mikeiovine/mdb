@@ -19,7 +19,12 @@ struct Options {
   size_t block_size{4096};
 
   // Where to write DB files.
-  std::filesystem::path path{"./"};
+  std::filesystem::path path{"./db_files"};
+
+  // If true, load the initial database state from the
+  // files in path. If this is set to false and path
+  // has files in it, an error occurs.
+  bool recovery_mode{true};
 
   // Max size for in-memory sorted table
   size_t memtable_max_size{4096 * 1000};

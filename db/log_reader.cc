@@ -7,7 +7,7 @@
 
 namespace mdb {
 
-LogReader::LogReader(int log_number, const Options& options)
+LogReader::LogReader(size_t log_number, const Options& options)
     : LogReader(
           options.env->MakeReadOnlyIO(util::LogFileName(options, log_number))) {
 }

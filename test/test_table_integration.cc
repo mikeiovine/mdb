@@ -17,8 +17,10 @@ BOOST_AUTO_TEST_CASE(TestUncompressedTableIntegration) {
   auto io{std::make_unique<WriteOnlyIOMock>(output)};
 
   MemTableT memtable{{"a", "b"}, {"c", "d"}, {"e", ""}};
+  size_t level{1};
 
-  UncompressedTableWriter writer{std::move(io), false, 16 + 2 * sizeof(size_t)};
+  UncompressedTableWriter writer{std::move(io), false, 16 + 2 * sizeof(size_t),
+                                 level};
 
   writer.WriteMemtable(memtable);
   writer.Add("f", "added_later");
@@ -32,6 +34,8 @@ BOOST_AUTO_TEST_CASE(TestUncompressedTableIntegration) {
   }
 
   BOOST_REQUIRE(reader.ValueOf("f") == "added_later");
+
+  BOOST_REQUIRE_EQUAL(reader.GetLevel(), level);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

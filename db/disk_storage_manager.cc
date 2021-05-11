@@ -1,7 +1,9 @@
 #include "disk_storage_manager.h"
 
+#include <boost/log/trivial.hpp>
 #include <chrono>
 #include <cmath>
+#include <iostream>
 #include <queue>
 #include <vector>
 
@@ -42,7 +44,7 @@ using PriorityQueue = std::priority_queue<KeyValue, std::vector<KeyValue>,
 DiskStorageManager::~DiskStorageManager() { WaitForOngoingCompactions(); }
 
 std::string DiskStorageManager::ValueOf(std::string_view key) const {
-  std::shared_lock lk(level_mutex_);
+  std::shared_lock lk{level_mutex_};
 
   for (const auto& levelid_and_level : levels_) {
     for (const auto& reader : levelid_and_level.second) {
@@ -60,7 +62,7 @@ std::string DiskStorageManager::ValueOf(std::string_view key) const {
 
 void DiskStorageManager::WriteMemtable(const Options& options,
                                        const MemTableT& memtable) {
-  std::unique_lock level_lk(level_mutex_);
+  std::unique_lock level_lk{level_mutex_};
 
   levels_[0].push_front(
       options.table_factory->TableFromMemtable(next_table_, options, memtable));
@@ -68,22 +70,40 @@ void DiskStorageManager::WriteMemtable(const Options& options,
   ++next_table_;
   level_lk.unlock();
 
-  std::scoped_lock compaction_lk(compaction_mutex_);
+  std::scoped_lock compaction_lk{compaction_mutex_};
   if (!ongoing_compaction_ && NeedsCompaction(0, options)) {
     ongoing_compaction_ = true;
+    BOOST_LOG_TRIVIAL(info) << "Compaction on level 0 triggered";
     std::thread(&DiskStorageManager::TriggerCompaction, this, 0, options)
         .detach();
   }
 }
 
 void DiskStorageManager::WaitForOngoingCompactions() {
-  std::unique_lock lk(compaction_mutex_);
+  std::unique_lock lk{compaction_mutex_};
   compaction_cv_.wait(lk, [this] { return !ongoing_compaction_; });
 }
 
-bool DiskStorageManager::NeedsCompaction(int level, const Options& opt) const {
+void DiskStorageManager::LoadIndices(std::priority_queue<size_t>& table_numbers,
+                                     const Options& opt) {
+  std::unique_lock level_lk{level_mutex_};
+
+  while (!table_numbers.empty()) {
+    auto table_number{table_numbers.top()};
+
+    next_table_ = std::max(next_table_, table_number + 1);
+    auto reader{opt.table_factory->MakeTableReader(table_number, opt)};
+    auto level{reader->GetLevel()};
+    levels_[level].push_back(std::move(reader));
+
+    table_numbers.pop();
+  }
+}
+
+bool DiskStorageManager::NeedsCompaction(size_t level,
+                                         const Options& opt) const {
   if (level == 0) {
-    std::shared_lock lk(level_mutex_);
+    std::shared_lock lk{level_mutex_};
     auto it{levels_.find(0)};
     if (it == levels_.end()) {
       return false;
@@ -95,10 +115,10 @@ bool DiskStorageManager::NeedsCompaction(int level, const Options& opt) const {
   return TotalSize(level) > std::pow(10, level + 1) * 1000 * 1000;
 }
 
-size_t DiskStorageManager::TotalSize(int level) const {
+size_t DiskStorageManager::TotalSize(size_t level) const {
   size_t total{0};
 
-  std::shared_lock lk(level_mutex_);
+  std::shared_lock lk{level_mutex_};
   auto it{levels_.find(level)};
   if (it == levels_.end()) {
     return 0;
@@ -111,9 +131,10 @@ size_t DiskStorageManager::TotalSize(int level) const {
   return total;
 }
 
-void DiskStorageManager::TriggerCompaction(int level, const Options& options) {
+void DiskStorageManager::TriggerCompaction(size_t level,
+                                           const Options& options) {
   Compact(level, options);
-  std::scoped_lock compaction_lk(compaction_mutex_);
+  std::scoped_lock compaction_lk{compaction_mutex_};
   ongoing_compaction_ = false;
 
   // Note that we do not unlock before notifying. This is due to a potential
@@ -126,7 +147,7 @@ void DiskStorageManager::TriggerCompaction(int level, const Options& options) {
   compaction_cv_.notify_all();
 }
 
-void DiskStorageManager::Compact(int level, const Options& options) {
+void DiskStorageManager::Compact(size_t level, const Options& options) {
   std::shared_lock level_read_lock(level_mutex_);
 
   // levels_[level] should have already been created if we are calling
@@ -157,7 +178,8 @@ void DiskStorageManager::Compact(int level, const Options& options) {
   ++next_table_;
   level_write_lock.unlock();
 
-  auto output_io{options.table_factory->MakeTableWriter(table_id, options)};
+  auto output_io{
+      options.table_factory->MakeTableWriter(table_id, options, level + 1)};
 
   std::string last_key{""};
 
@@ -188,10 +210,12 @@ void DiskStorageManager::Compact(int level, const Options& options) {
 
     level_write_lock.lock();
     levels_[level + 1].push_front(
-        options.table_factory->MakeTableReader(*output_io, options));
+        options.table_factory->TableReaderFromWriter(*output_io, options));
     level_write_lock.unlock();
 
     if (NeedsCompaction(level + 1, options)) {
+      BOOST_LOG_TRIVIAL(info)
+          << "Compaction on level " << level + 1 << " triggered.";
       Compact(level + 1, options);
     }
 

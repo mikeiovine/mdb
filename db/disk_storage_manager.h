@@ -3,6 +3,7 @@
 #include <future>
 #include <list>
 #include <map>
+#include <queue>
 #include <shared_mutex>
 #include <string>
 
@@ -35,16 +36,24 @@ class DiskStorageManager {
 
   void WaitForOngoingCompactions();
 
+  // Load the specified tables into the the system. Assumes higher table
+  // numbers are more recent.
+  //
+  // This function is technically thread-safe, but it's not really intended to
+  // be used concurrently with other operations. It's meant for loading the
+  // tables during database construction in recovery mode.
+  void LoadIndices(std::priority_queue<size_t>& table_numbers,
+                   const Options& opt);
+
  private:
-  bool NeedsCompaction(int level, const Options& options) const;
-  void Compact(int level, const Options& options);
-  void TriggerCompaction(int level, const Options& options);
-  size_t TotalSize(int level) const;
-  void CreateLevelIfAbsent(int level);
+  bool NeedsCompaction(size_t level, const Options& options) const;
+  void Compact(size_t level, const Options& options);
+  void TriggerCompaction(size_t level, const Options& options);
+  size_t TotalSize(size_t level) const;
 
-  int next_table_{0};
+  size_t next_table_{0};
 
-  std::map<int, LevelT> levels_;
+  std::map<size_t, LevelT> levels_;
 
   mutable std::shared_mutex level_mutex_;
 

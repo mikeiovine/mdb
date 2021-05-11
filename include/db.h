@@ -36,6 +36,10 @@ class DB {
   void UpdateMemtable(std::string_view key, std::string_view value);
   void ClearMemtable();
 
+  void Recover();
+  void LoadLogFile(const std::vector<size_t>& indices);
+  void InitNextLogWriter();
+
   Options options_;
 
   LogWriter logger_;
@@ -43,7 +47,7 @@ class DB {
   std::mutex write_mutex_;
   std::shared_mutex memtable_mutex_;
 
-  int next_log_{1};
+  size_t next_log_{0};
   size_t cache_size_{0};
 
   MemTableT memtable_;

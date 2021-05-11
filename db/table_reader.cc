@@ -105,6 +105,22 @@ class UncompressedTableReader::UncompressedTableIter
   size_t pos_{0};
 };
 
+UncompressedTableReader::UncompressedTableReader(
+    std::unique_ptr<ReadOnlyIO>&& file)
+    : file_{std::move(file)} {
+  assert(file_ != nullptr);
+  size_t offset = sizeof(size_t);
+  while (offset < file_->Size()) {
+    size_t block_size{ReadSize(offset)};
+    size_t key_size{ReadSize(offset + sizeof(size_t))};
+    std::string key{ReadString(key_size, offset + 2 * sizeof(size_t))};
+    index_[key] = offset;
+
+    // Add sizeof(size_t); block_size does not include the size of itself.
+    offset += block_size + sizeof(size_t);
+  }
+}
+
 std::optional<std::string> UncompressedTableReader::ValueOf(
     std::string_view key) {
   auto lwr{index_.upper_bound(key)};
@@ -191,6 +207,12 @@ size_t UncompressedTableReader::Size() const { return file_->Size(); }
 
 std::string UncompressedTableReader::GetFileName() const noexcept {
   return file_->GetFileName();
+}
+
+size_t UncompressedTableReader::GetLevel() const {
+  size_t level;
+  file_->Read(reinterpret_cast<char*>(&level), sizeof(size_t), 0);
+  return level;
 }
 
 }  // namespace mdb

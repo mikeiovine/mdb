@@ -1,3 +1,4 @@
+#include <boost/log/core/core.hpp>
 #include <boost/program_options.hpp>
 #include <cassert>
 #include <iostream>
@@ -99,6 +100,8 @@ int main(int argc, char *argv[]) {
                        .num_entries = vm["num_entries"].as<int64_t>()};
 
   auto benchmarks{CreateBenchmark(vm["benchmark"].as<std::string>(), opt)};
+
+  boost::log::core::get()->set_logging_enabled(false);
 
   for (const auto &benchmark_pair : benchmarks) {
     std::cout << "Running benchmark " << benchmark_pair.first << '\n';

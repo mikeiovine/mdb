@@ -2,6 +2,14 @@
 
 namespace mdb {
 
+UncompressedTableWriter::UncompressedTableWriter(
+    std::unique_ptr<WriteOnlyIO>&& file, bool sync, size_t block_size,
+    size_t level)
+    : file_{std::move(file)}, sync_{sync}, block_size_{block_size} {
+  assert(file_ != nullptr);
+  file_->Write(reinterpret_cast<char*>(&level), sizeof(size_t));
+}
+
 IndexT UncompressedTableWriter::GetIndex() const { return index_; }
 
 void UncompressedTableWriter::WriteMemtable(const MemTableT& memtable) {

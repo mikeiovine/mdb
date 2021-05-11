@@ -61,10 +61,12 @@ if(Boost_FOUND)
         test/test_log_integration.cc
         test/test_table_integration.cc
         test/test_disk_storage_manager.cc
+        test/test_db.cc
         test/test_main.cc
     )
     target_link_libraries(
         mdb_test
         mdb_lib
+        Boost::unit_test_framework
     )
 endif()

@@ -19,7 +19,8 @@ using MemTableOrderedT = std::vector<std::pair<std::string, std::string>>;
  */
 void CheckNumBlocksUncompressed(const std::vector<char> &output, int expected) {
   int n{0};
-  size_t pos{0};
+  // Skip the level number at the start
+  size_t pos{sizeof(size_t)};
   while (pos < output.size()) {
     BOOST_TEST_REQUIRE(output.size() - pos >= sizeof(size_t));
     pos += ReadSizeT(output, pos) + sizeof(size_t);
@@ -98,7 +99,7 @@ BOOST_AUTO_TEST_CASE(TestCorrectNumBlocks) {
                      {"4", "a"},
                      {"5", "b"}};
 
-  UncompressedTableWriter writer{std::move(io), sync, block_size};
+  UncompressedTableWriter writer{std::move(io), sync, block_size, 0};
 
   writer.WriteMemtable(to_write);
 
@@ -125,7 +126,7 @@ BOOST_AUTO_TEST_CASE(TestContentsBlocks) {
                      {"4", "a"},
                      {"5", "b"}};
 
-  UncompressedTableWriter writer{std::move(io), sync, block_size};
+  UncompressedTableWriter writer{std::move(io), sync, block_size, 0};
 
   writer.WriteMemtable(to_write);
 
@@ -154,7 +155,7 @@ BOOST_AUTO_TEST_CASE(TestIndex) {
                      {"4", "a"},
                      {"5", "b"}};
 
-  UncompressedTableWriter writer{std::move(io), sync, block_size};
+  UncompressedTableWriter writer{std::move(io), sync, block_size, 0};
 
   size_t first_block_size =
       2 + to_write["1"].size() + to_write["2"].size() + 4 * sizeof(size_t);
@@ -162,9 +163,9 @@ BOOST_AUTO_TEST_CASE(TestIndex) {
   size_t second_block_size = 1 + to_write["3"].size() + 2 * sizeof(size_t);
 
   IndexT expected{
-      {"1", 0},
-      {"3", first_block_size + sizeof(size_t)},
-      {"4", second_block_size + first_block_size + 2 * sizeof(size_t)}};
+      {"1", sizeof(size_t)},
+      {"3", first_block_size + 2 * sizeof(size_t)},
+      {"4", second_block_size + first_block_size + 3 * sizeof(size_t)}};
 
   writer.WriteMemtable(to_write);
   BOOST_TEST_REQUIRE(expected == writer.GetIndex(),
@@ -184,13 +185,13 @@ BOOST_AUTO_TEST_CASE(TestNumKeys) {
   std::vector<char> output1;
   auto io1{std::make_unique<WriteOnlyIOMock>(output1)};
 
-  UncompressedTableWriter writer1{std::move(io1), sync, block_size};
+  UncompressedTableWriter writer1{std::move(io1), sync, block_size, 0};
   writer1.WriteMemtable(to_write);
 
   // Write individual key/value pairs
   std::vector<char> output2;
   auto io2{std::make_unique<WriteOnlyIOMock>(output2)};
-  UncompressedTableWriter writer2{std::move(io2), sync, block_size};
+  UncompressedTableWriter writer2{std::move(io2), sync, block_size, 0};
 
   writer2.Add("1", "");
   writer2.Add("2", "");
@@ -212,7 +213,7 @@ BOOST_AUTO_TEST_CASE(TestFlush) {
   // Write individual key/value pairs
   std::vector<char> output;
   auto io{std::make_unique<WriteOnlyIOMock>(output)};
-  UncompressedTableWriter writer{std::move(io), sync, block_size};
+  UncompressedTableWriter writer{std::move(io), sync, block_size, 0};
 
   writer.Add("1", "");
   writer.Flush();
@@ -232,10 +233,26 @@ BOOST_AUTO_TEST_CASE(TestAddingUnsortedThrows) {
 
   std::vector<char> output;
   auto io{std::make_unique<WriteOnlyIOMock>(output)};
-  UncompressedTableWriter writer{std::move(io), sync, block_size};
+  UncompressedTableWriter writer{std::move(io), sync, block_size, 0};
 
   writer.Add("2", "");
   BOOST_REQUIRE_THROW(writer.Add("1", ""), std::invalid_argument);
+}
+
+/**
+ * Test that the correct level is written to the start of the file.
+ */
+BOOST_AUTO_TEST_CASE(TestLevel) {
+  bool sync{false};
+  size_t block_size{16 + 5 * sizeof(size_t)};
+  size_t level{42};
+
+  std::vector<char> output;
+  auto io{std::make_unique<WriteOnlyIOMock>(output)};
+  UncompressedTableWriter writer{std::move(io), sync, block_size, level};
+
+  size_t level_actual{ReadSizeT(output, 0)};
+  BOOST_REQUIRE_EQUAL(level_actual, level);
 }
 
 BOOST_AUTO_TEST_SUITE_END()
