@@ -1,10 +1,10 @@
 # mdb
+> Warning: this project was made for learning/fun. It is not intended for serious use.
+
 This is a key-value store implementation that I made for fun.
 The design is roughly based on Google's [LevelDB](https://github.com/google/leveldb).
 In particular, the KV store is backed by a log-structured merge tree on
-disk.
-
-This is still a work-in-progress.
+disk. 
 
 ## Dependencies
 
